@@ -4,6 +4,8 @@ A single-file, browser-based reader and game-console shell for "Choose Your Own 
 
 Includes a bundled demo book, **"The BOOKSOLE,"** an original horror-comedy story that also serves as the framing story for the intro cutscene.
 
+To playthis users can simply download the html file and play it on their devices ,laptops and large screen devices are preffered
+
 ---
 
 ## What this actually is
