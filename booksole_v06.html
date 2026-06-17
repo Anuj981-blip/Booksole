@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BOOKSOLE</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --y:#e8e800;--b:#6699ff;--g:#33dd66;--r:#ff4444;
+  --dim:#444455;--faint:#1a1a2a;--text:#e0e0e0;--subtext:#aaaacc;
+  --panel:#06060f;--panelborder:#1e1e32;--highlight:#8877ff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#000;color:var(--text);font-family:'Courier Prime',monospace;overflow:hidden;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 4px);pointer-events:none;z-index:9999;}
+#screen{width:100%;height:100vh;display:flex;flex-direction:column;}
+
+/* ── INTRO ── */
+#intro{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#000;position:relative;}
+#intro canvas{image-rendering:pixelated;cursor:pointer;max-width:100%;max-height:100%;}
+#intro-skip{position:fixed;bottom:14px;right:18px;font-family:'Press Start 2P',monospace;font-size:7px;color:#333;background:none;border:1px solid #1a1a1a;padding:5px 10px;cursor:pointer;letter-spacing:1px;}
+#intro-skip:hover{color:#888;border-color:#444;}
+
+/* ── BOOT ── */
+#boot{display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#000;position:relative;overflow:hidden;cursor:pointer;}
+.bg-grid{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(0,60,200,.04) 60px,rgba(0,60,200,.04) 61px),repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(0,60,200,.04) 60px,rgba(0,60,200,.04) 61px);}
+.ring{position:absolute;border-radius:50%;border:1px solid rgba(136,119,255,.12);animation:ringpulse 4s ease-in-out infinite;}
+@keyframes ringpulse{0%,100%{transform:scale(1);opacity:.4;}50%{transform:scale(1.05);opacity:1;}}
+.logo-txt{font-family:'Press Start 2P',monospace;font-size:clamp(20px,4vw,38px);color:var(--y);text-shadow:4px 4px 0 #888800,8px 8px 0 #444400;letter-spacing:3px;}
+.drips{display:flex;gap:0;height:28px;align-items:flex-start;padding-left:4px;}
+.drip{border-radius:0 0 50% 50%;background:var(--y);animation:dripani 2.5s ease-in-out infinite;}
+@keyframes dripani{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.3);}}
+.logo-sub{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--b);letter-spacing:6px;margin-top:26px;}
+.boot-ver{font-size:11px;color:#555;letter-spacing:3px;margin-top:6px;}
+.boot-prog{margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.bar-wrap{width:260px;height:5px;background:#111;border:1px solid #222;}
+.bar-fill{height:100%;width:0;background:var(--y);transition:width .08s linear;}
+.boot-msg{font-family:'Press Start 2P',monospace;font-size:7px;color:#888;letter-spacing:2px;height:18px;text-align:center;}
+.boot-blink{animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* ── LIBRARY ── */
+#library{display:none;flex-direction:column;height:100%;background:#000;}
+.lib-bar{background:#07070f;border-bottom:2px solid var(--y);padding:10px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.lib-logo{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--y);letter-spacing:2px;}
+.lib-count{font-size:11px;color:#666;letter-spacing:1px;}
+.lib-add{margin-left:auto;font-family:'Press Start 2P',monospace;font-size:7px;color:#999;background:none;border:1px solid #333;padding:6px 10px;cursor:pointer;letter-spacing:1px;}
+.lib-add:hover{color:var(--y);border-color:var(--y);}
+.lib-body{flex:1;overflow-y:auto;padding:28px 32px;}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px;}
+.cart-card{cursor:pointer;border:1px solid #1e1e2e;background:#06060f;overflow:hidden;transition:all .15s;position:relative;}
+.cart-card:hover{border-color:#5544bb;transform:translateY(-3px);box-shadow:0 8px 24px rgba(85,68,187,.25);}
+.cc-cover{width:100%;aspect-ratio:3/4;background:#0a0a14;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+.cc-cover img{width:100%;height:100%;object-fit:cover;}
+.cc-cover-fallback{font-family:'Press Start 2P',monospace;font-size:28px;color:#2a2a3a;}
+.cc-badge{position:absolute;top:6px;right:6px;font-family:'Press Start 2P',monospace;font-size:6px;padding:3px 6px;letter-spacing:1px;}
+.cc-badge.gyg{background:rgba(204,34,34,.9);color:#fff;}
+.cc-badge.cg{background:rgba(85,136,255,.9);color:#fff;}
+.cc-badge.new{background:rgba(34,204,68,.9);color:#000;}
+.cc-info{padding:10px;}
+.cc-title{font-family:'Press Start 2P',monospace;font-size:6px;color:#aaa;letter-spacing:1px;line-height:1.7;margin-bottom:5px;}
+.cc-author{font-size:10px;color:#666;}
+.cc-prog{margin-top:6px;display:flex;align-items:center;gap:6px;}
+.cc-pbar{flex:1;height:3px;background:#1a1a2a;}
+.cc-pfill{height:100%;background:var(--b);}
+.cc-pct{font-family:'Press Start 2P',monospace;font-size:5px;color:#666;}
+.cart-card.add-card{border-style:dashed;border-color:#1e1e2e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:220px;}
+.cart-card.add-card:hover{border-color:var(--b);}
+.add-ico{font-family:'Press Start 2P',monospace;font-size:24px;color:#1e1e2e;}
+.cart-card.add-card:hover .add-ico{color:var(--b);}
+.add-lbl{font-family:'Press Start 2P',monospace;font-size:7px;color:#333;letter-spacing:1px;}
+.cart-card.add-card:hover .add-lbl{color:var(--b);}
+
+/* ── DETAIL PANEL ── */
+#detail{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:900;align-items:center;justify-content:center;}
+.det-box{background:#060610;border:1px solid var(--highlight);max-width:680px;width:92%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 40px rgba(136,119,255,.2);}
+.det-top{display:flex;gap:0;flex-shrink:0;}
+.det-cover{width:160px;min-height:220px;flex-shrink:0;background:#0a0a14;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.det-cover img{width:100%;height:100%;object-fit:cover;}
+.det-cover-fallback{font-family:'Press Start 2P',monospace;font-size:36px;color:#2a2a3a;}
+.det-meta{flex:1;padding:20px;display:flex;flex-direction:column;gap:8px;overflow:hidden;}
+.det-title{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--y);letter-spacing:1px;line-height:1.7;}
+.det-author{font-size:12px;color:var(--b);margin-top:2px;}
+.det-pub{font-size:11px;color:#666;margin-top:2px;}
+.det-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.det-tag{font-family:'Press Start 2P',monospace;font-size:6px;padding:3px 8px;border:1px solid #333;color:#888;letter-spacing:1px;}
+.det-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:auto;}
+.det-stat{padding:7px 10px;background:#0a0a18;border:1px solid #1e1e2e;}
+.det-sl{font-size:10px;color:#888;}
+.det-sv{font-family:'Press Start 2P',monospace;font-size:9px;color:#ccc;margin-top:3px;}
+.det-desc{padding:14px 20px;font-size:12px;color:#888;line-height:1.9;overflow-y:auto;border-top:1px solid #1a1a2a;max-height:140px;}
+.det-actions{padding:14px 20px;border-top:1px solid #1a1a2a;display:flex;gap:10px;flex-shrink:0;}
+.det-play{font-family:'Press Start 2P',monospace;font-size:9px;background:#0a0014;border:2px solid var(--y);color:var(--y);padding:11px 22px;cursor:pointer;letter-spacing:1px;}
+.det-play:hover{background:var(--y);color:#000;}
+.det-del{font-family:'Press Start 2P',monospace;font-size:7px;background:none;border:1px solid #222;color:#555;padding:11px 14px;cursor:pointer;letter-spacing:1px;margin-left:auto;}
+.det-del:hover{color:var(--r);border-color:var(--r);}
+.det-close{font-family:'Press Start 2P',monospace;font-size:7px;background:none;border:1px solid #222;color:#555;padding:11px 14px;cursor:pointer;letter-spacing:1px;}
+.det-close:hover{color:var(--subtext);border-color:#666;}
+
+/* ── PARSING ── */
+#parsing{display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;}
+.p-logo{font-family:'Press Start 2P',monospace;font-size:16px;color:var(--y);letter-spacing:4px;}
+.plog{font-size:11px;color:#777;height:90px;overflow-y:auto;width:320px;}
+.plog p{padding:1px 0;}.plog p.ok{color:var(--g);}.plog p.warn{color:var(--y);}
+
+/* ── APP ── */
+#app{display:none;flex-direction:column;height:100%;}
+.topbar{background:#07070f;border-bottom:2px solid var(--y);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.tlogo{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--y);letter-spacing:2px;}
+.tbadge{font-family:'Courier Prime',monospace;font-size:9px;padding:2px 7px;border:1px solid #333;color:#666;letter-spacing:2px;}
+.tbook{font-size:11px;color:var(--b);margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;}
+.tright{margin-left:auto;display:flex;gap:6px;}
+.tbtn{font-family:'Press Start 2P',monospace;font-size:7px;color:#888;background:none;border:1px solid #333;padding:5px 8px;cursor:pointer;letter-spacing:1px;}
+.tbtn:hover{color:var(--y);border-color:var(--y);}
+.tbtn.danger:hover{color:var(--r);border-color:var(--r);}
+.body{display:grid;grid-template-columns:190px 1fr 210px;flex:1;overflow:hidden;}
+
+/* LEFT PANEL */
+.lp{border-right:1px solid #1a1a2a;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+.ph{font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:2px;color:#666;padding:9px 10px 7px;border-bottom:1px solid #111;}
+.saves{flex:1;overflow-y:auto;padding:5px;}
+.sv{padding:7px 9px;border:1px solid transparent;cursor:pointer;margin-bottom:3px;}
+.sv:hover{background:#0c0c18;border-color:#2a2a44;}
+.sv.cur{background:#080014;border-color:#5544aa;}
+.sv-name{font-family:'Press Start 2P',monospace;font-size:7px;color:#999;letter-spacing:1px;}
+.sv.cur .sv-name{color:var(--y);}
+.sv-sub{font-size:10px;color:#555;margin-top:3px;}
+.sv-del{float:right;color:#333;background:none;border:none;cursor:pointer;font-size:11px;font-family:monospace;line-height:1;}
+.sv-del:hover{color:var(--r);}
+.newrun{margin:5px;padding:8px;border:1px dashed #1e1e2e;text-align:center;font-family:'Press Start 2P',monospace;font-size:7px;color:#444;cursor:pointer;letter-spacing:1px;}
+.newrun:hover{border-color:#555;color:#999;}
+.emap{border-top:1px solid #111;padding:10px;}
+.emap-h{font-family:'Press Start 2P',monospace;font-size:6px;color:#555;margin-bottom:7px;letter-spacing:1px;}
+.edots{display:flex;flex-wrap:wrap;gap:3px;}
+.edot{width:12px;height:12px;background:#0d0d0d;border:1px solid #1a1a1a;cursor:default;transition:all .2s;}
+.edot.good{background:var(--g);border-color:var(--g);}
+.edot.bad{background:var(--r);border-color:var(--r);}
+.edot.neutral{background:var(--y);border-color:var(--y);}
+.emap-c{font-size:10px;color:#666;margin-top:6px;}
+
+/* MAIN PANEL */
+.mp{display:flex;flex-direction:column;overflow:hidden;background:#030308;}
+.mbc{font-size:10px;color:#777;padding:7px 18px;border-bottom:1px solid #111;flex-shrink:0;display:flex;align-items:center;gap:12px;}
+.mbc-info{flex:1;color:#999;}
+.back-btn{font-family:'Press Start 2P',monospace;font-size:6px;color:#777;background:none;border:1px solid #333;padding:3px 7px;cursor:pointer;letter-spacing:1px;}
+.back-btn:hover{color:var(--b);border-color:var(--b);}
+.back-btn:disabled{opacity:.25;cursor:default;}
+.font-ctrl{display:flex;gap:4px;flex-shrink:0;}
+.fcbtn{font-family:'Press Start 2P',monospace;font-size:8px;color:#777;background:none;border:1px solid #333;padding:2px 6px;cursor:pointer;}
+.fcbtn:hover{color:var(--y);border-color:var(--y);}
+.story{flex:1;overflow-y:auto;padding:22px 26px;}
+.pg-id{font-family:'Press Start 2P',monospace;font-size:7px;color:#555;margin-bottom:14px;letter-spacing:2px;}
+.path-row{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin-bottom:16px;}
+.pn{font-size:10px;padding:2px 7px;border:1px solid #1e1e2e;color:#555;cursor:pointer;transition:all .1s;}
+.pn:hover{color:var(--b);border-color:#5544bb;}
+.pn.cur{border-color:#5544bb;color:var(--b);cursor:default;}
+.parr{color:#2a2a2a;font-size:10px;padding:0 2px;}
+.stxt{color:#ddd;line-height:2.1;margin-bottom:22px;white-space:pre-wrap;}
+.ch{font-family:'Press Start 2P',monospace;font-size:7px;color:#666;margin-bottom:10px;letter-spacing:2px;}
+.choices{display:flex;flex-direction:column;gap:6px;}
+.cbtn{background:#050510;border:1px solid #252535;padding:12px 16px;color:#bbb;cursor:pointer;font-family:'Courier Prime',monospace;text-align:left;display:flex;gap:12px;transition:all .12s;font-size:13px;}
+.cbtn:hover{background:#0a0020;border-color:#6655cc;color:var(--y);}
+.cn{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--b);min-width:18px;margin-top:2px;flex-shrink:0;}
+.key-hint{font-family:'Press Start 2P',monospace;font-size:6px;color:#333;margin-top:16px;letter-spacing:1px;}
+.ending-wrap{text-align:center;padding:40px 20px;}
+.ending-sym{font-family:'Press Start 2P',monospace;font-size:36px;margin-bottom:16px;}
+.ending-sym.good{color:var(--g);text-shadow:0 0 20px rgba(51,221,102,.5);}
+.ending-sym.bad{color:var(--r);text-shadow:0 0 20px rgba(255,68,68,.5);}
+.ending-sym.neutral{color:var(--y);text-shadow:0 0 20px rgba(232,232,0,.4);}
+.etype{font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:2px;margin-bottom:8px;}
+.etype.good{color:var(--g);}.etype.bad{color:var(--r);}.etype.neutral{color:var(--y);}
+.elbl{font-size:15px;color:#888;margin-bottom:16px;}
+.etxt{color:#bbb;font-size:13px;line-height:2;margin-bottom:24px;max-width:380px;margin-left:auto;margin-right:auto;}
+.end-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.rbtn{background:#060612;border:1px solid #5544aa;padding:11px 20px;color:var(--b);cursor:pointer;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;}
+.rbtn:hover{background:#0e0030;color:var(--y);border-color:var(--y);}
+
+/* RIGHT PANEL */
+.rp{border-left:1px solid #1a1a2a;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+.achs{flex:1;overflow-y:auto;padding:5px;}
+.ach{padding:9px 10px;border:1px solid #111;margin-bottom:3px;}
+.ach.on{background:#001a0a;border-color:#0d3318;}
+.ach.off{opacity:.35;}
+.ach-n{font-family:'Press Start 2P',monospace;font-size:6px;color:#777;letter-spacing:1px;}
+.ach.on .ach-n{color:var(--g);}
+.ach-d{font-size:10px;color:#444;margin-top:3px;}
+.ach.on .ach-d{color:#668;}
+.stats{border-top:1px solid #111;padding:10px;}
+.srow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #0d0d0d;}
+.srow:last-child{border:none;}
+.sl{font-size:11px;color:#777;}
+.sv2{font-family:'Press Start 2P',monospace;font-size:8px;color:#bbb;}
+
+/* JOURNAL */
+#journal{display:none;flex-direction:column;height:100%;}
+.jt{background:#07070f;border-bottom:2px solid var(--y);padding:9px 16px;display:flex;align-items:center;gap:10px;}
+.jt-l{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--y);letter-spacing:2px;}
+.jbody{flex:1;overflow-y:auto;padding:20px 24px;}
+.js{margin-bottom:22px;}
+.jsh{font-family:'Press Start 2P',monospace;font-size:7px;color:#555;margin-bottom:10px;letter-spacing:2px;}
+.ecard{border:1px solid #1a1a1a;padding:12px 14px;margin-bottom:6px;background:#05050e;}
+.ecard.g{border-color:#0d3318;}.ecard.b{border-color:#3a0d0d;}.ecard.n{border-color:#3a3400;}
+.ec-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ecdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.ecdot.g{background:var(--g);}.ecdot.b{background:var(--r);}.ecdot.n{background:var(--y);}
+.ec-n{font-family:'Press Start 2P',monospace;font-size:7px;color:#888;letter-spacing:1px;}
+.ec-p{font-size:10px;color:#444;margin-left:auto;}
+.ec-inp{background:transparent;border:none;border-top:1px solid #1a1a1a;color:#aaa;font-family:'Courier Prime',monospace;font-size:12px;width:100%;resize:none;outline:none;min-height:34px;padding-top:7px;line-height:1.6;}
+.ec-inp::placeholder{color:#2a2a2a;}
+.unk{font-size:11px;color:#2a2a2a;font-style:italic;border:1px solid #0d0d0d;padding:8px 12px;margin-bottom:4px;}
+
+/* SEARCH */
+#searchbar{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#060612;border:1px solid var(--highlight);padding:16px 20px;z-index:9990;width:360px;box-shadow:0 0 30px rgba(136,119,255,.2);}
+.sb-label{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--b);margin-bottom:10px;letter-spacing:2px;}
+#sb-input{background:#000;border:1px solid #333;color:#eee;font-family:'Courier Prime',monospace;font-size:13px;padding:7px 11px;width:100%;outline:none;}
+#sb-input:focus{border-color:var(--highlight);}
+#sb-results{margin-top:10px;max-height:220px;overflow-y:auto;}
+.sb-item{padding:8px 10px;border:1px solid transparent;cursor:pointer;font-size:12px;color:#888;}
+.sb-item:hover{background:#0a0020;border-color:var(--highlight);color:var(--y);}
+.sb-pg{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--b);margin-right:10px;}
+mark{background:none;color:var(--y);}
+
+/* TOAST */
+#toast{position:fixed;bottom:14px;right:14px;background:#001a0a;border:1px solid var(--g);padding:10px 14px;font-family:'Press Start 2P',monospace;font-size:7px;color:var(--g);max-width:240px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9998;letter-spacing:1px;line-height:2;}
+#toast.show{opacity:1;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#2a2a3a;}::-webkit-scrollbar-thumb:hover{background:#4a4a5a;}
+</style>
+</head>
+<body>
+<div id="screen">
+
+<!-- INTRO -->
+<div id="intro">
+  <canvas id="ic"></canvas>
+  <button id="intro-skip">SKIP INTRO ›</button>
+</div>
+
+<!-- BOOT -->
+<div id="boot">
+  <div class="bg-grid"></div>
+  <div class="ring" style="width:500px;height:500px;animation-delay:0s;"></div>
+  <div class="ring" style="width:340px;height:340px;animation-delay:.6s;"></div>
+  <div class="ring" style="width:180px;height:180px;animation-delay:1.2s;"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;">
+    <div class="logo-txt">BOOKSOLE</div>
+    <div class="drips">
+      <div class="drip" style="width:7px;height:20px;animation-delay:0s;"></div>
+      <div class="drip" style="width:7px;height:13px;margin-left:46px;animation-delay:.3s;"></div>
+      <div class="drip" style="width:7px;height:24px;margin-left:38px;animation-delay:.7s;"></div>
+      <div class="drip" style="width:7px;height:11px;margin-left:42px;animation-delay:1s;"></div>
+      <div class="drip" style="width:7px;height:18px;margin-left:38px;animation-delay:.5s;"></div>
+      <div class="drip" style="width:7px;height:14px;margin-left:40px;animation-delay:.9s;"></div>
+    </div>
+    <div class="logo-sub">BOOK · CONSOLE</div>
+    <div class="boot-ver">v0.5 · your gamebook library</div>
+    <div class="boot-prog">
+      <div class="bar-wrap"><div class="bar-fill" id="bbar"></div></div>
+      <div class="boot-msg" id="bmsg">INITIALIZING...</div>
+    </div>
+  </div>
+</div>
+
+<!-- LIBRARY -->
+<div id="library">
+  <div class="lib-bar">
+    <span class="lib-logo">BOOKSOLE</span>
+    <span class="lib-count" id="lib-count">—</span>
+    <input type="file" id="fi" accept=".txt,.epub,.html,.htm" style="display:none">
+    <button class="lib-add" id="lib-add-btn">+ ADD BOOK</button>
+  </div>
+  <div class="lib-body"><div class="lib-grid" id="lib-grid"></div></div>
+</div>
+
+<!-- DETAIL -->
+<div id="detail">
+  <div class="det-box">
+    <div class="det-top">
+      <div class="det-cover" id="det-cover"><div class="det-cover-fallback">📖</div></div>
+      <div class="det-meta">
+        <div class="det-title" id="det-title">—</div>
+        <div class="det-author" id="det-author">—</div>
+        <div class="det-pub" id="det-pub">—</div>
+        <div class="det-tags" id="det-tags"></div>
+        <div class="det-stats" id="det-stats"></div>
+      </div>
+    </div>
+    <div class="det-desc" id="det-desc"></div>
+    <div class="det-actions">
+      <button class="det-play" id="det-play">▶ READ</button>
+      <button class="det-close" id="det-close">✕ CLOSE</button>
+      <button class="det-del" id="det-del">🗑 REMOVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- PARSING -->
+<div id="parsing">
+  <div class="p-logo">BOOKSOLE</div>
+  <div style="font-size:11px;color:#666;letter-spacing:2px;margin-bottom:8px;">reading cartridge...</div>
+  <div class="plog" id="plog"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <button class="tbtn" id="libbackbtn">⌂ LIB</button>
+    <span class="tlogo">BOOKSOLE</span>
+    <span class="tbadge">v0.5</span>
+    <span class="tbook" id="tbook">—</span>
+    <div class="tright">
+      <button class="tbtn" id="srchbtn">🔍 SEARCH</button>
+      <button class="tbtn" id="jbtn">JOURNAL</button>
+      <button class="tbtn" id="exbtn">EXPORT</button>
+      <button class="tbtn" id="imbtn">IMPORT</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="lp">
+      <div class="ph">SAVE SLOTS</div>
+      <div class="saves" id="saves"></div>
+      <div class="newrun" id="newrun">+ NEW RUN</div>
+      <div class="emap">
+        <div class="emap-h">ENDINGS MAP</div>
+        <div class="edots" id="edots"></div>
+        <div class="emap-c" id="empc">— / —</div>
+      </div>
+    </div>
+    <div class="mp">
+      <div class="mbc">
+        <span class="mbc-info" id="mbc">—</span>
+        <div class="font-ctrl">
+          <button class="fcbtn" id="fdn">A-</button>
+          <button class="fcbtn" id="fup">A+</button>
+        </div>
+        <button class="back-btn" id="backbtn" disabled>← BACK</button>
+      </div>
+      <div class="story" id="story"></div>
+    </div>
+    <div class="rp">
+      <div class="ph">ACHIEVEMENTS</div>
+      <div class="achs" id="achs"></div>
+      <div class="stats">
+        <div class="srow"><span class="sl">choices made</span><span class="sv2" id="sc">0</span></div>
+        <div class="srow"><span class="sl">pages visited</span><span class="sv2" id="sp">0</span></div>
+        <div class="srow"><span class="sl">total runs</span><span class="sv2" id="sr">0</span></div>
+        <div class="srow"><span class="sl">endings found</span><span class="sv2" id="se">0</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JOURNAL -->
+<div id="journal">
+  <div class="jt">
+    <span class="jt-l">JOURNAL</span>
+    <span style="font-size:11px;color:#555;margin-left:8px;" id="jbn">—</span>
+    <button class="tbtn" style="margin-left:auto;" id="jback">← BACK</button>
+  </div>
+  <div class="jbody" id="jbody"></div>
+</div>
+
+<!-- SEARCH -->
+<div id="searchbar">
+  <div class="sb-label">// SEARCH PAGES</div>
+  <input id="sb-input" type="text" placeholder="search story text..." autocomplete="off">
+  <div id="sb-results"></div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  PIXEL ART INTRO  — v3 cinematic rewrite
+//  Canvas 640×360 (16:9). Each logical "pixel" = 4×4.
+//  Sprite grid is 160×90 logical pixels.
+//  Characters are 20–32lp tall for legible detail.
+// ══════════════════════════════════════════════════════
+(function(){
+  const IC=document.getElementById('ic');
+  const ctx=IC.getContext('2d');
+  const W=640,H=360; // 16:9
+  IC.width=W;IC.height=H;
+  ctx.imageSmoothingEnabled=false;
+
+  function resize(){
+    const s=Math.min(window.innerWidth/W,(window.innerHeight)/H,2.5);
+    IC.style.width=Math.floor(W*s)+'px';IC.style.height=Math.floor(H*s)+'px';
+  }
+  resize();window.addEventListener('resize',resize);
+
+  // ── PALETTE ──────────────────────────────────────────
+  const C={
+    black:'#000000', dk:'#080810', bg0:'#050510', bg1:'#0c0c1e',
+    white:'#ffffff', cream:'#f4e8c8', ltgrey:'#8899aa', grey:'#556677', dkgrey:'#1e2233',
+    yellow:'#f0d000', gold:'#c8a800', amber:'#e07000',
+    blue:'#2255cc', ltblue:'#5599ff', skyblue:'#6699cc', cyan:'#22ccee',
+    green:'#22aa44', ltgreen:'#55dd66', dkgreen:'#0d5522',
+    red:'#cc2222', ltred:'#ff5544', dkred:'#661111',
+    purple:'#7733bb', ltpurple:'#aa66ee', dkpurple:'#330055',
+    orange:'#dd6600',
+    skin:'#f2c07a', skindark:'#c88840', skinlit:'#fde8b0', skinshad:'#aa6633',
+    hairbrown:'#4a2800', hairdark:'#2a1400', hairlt:'#7a4820',
+    wooddk:'#5a3010', wood:'#8b5e30', woodlt:'#c07840',
+    walldk:'#181820', wall:'#252535', walllt:'#363648', wallhi:'#4a4a60',
+    wallbrick:'#2e2e40', wallbrickhi:'#3e3e52',
+    winblue:'#4488cc', winlit:'#88ccff', winwarm:'#ffcc66', winwarmdk:'#cc8822',
+    pkg:'#9b6c35', pkglt:'#c49050', pkgdk:'#6b4215',
+    page:'#f0ecd8', pagedk:'#ccc4a0', pageshadow:'#a09870',
+    devbg:'#050514', devlit:'#141440',
+    lamp:'#ffdd44', lampglow:'#ffaa00',
+    curtain:'#2a0844', curtainlt:'#441166', curtainshadow:'#180530',
+    starglow:'#cce8ff', starglow2:'#ffffcc',
+    grounddk:'#111118', groundmid:'#1a1a28', groundhi:'#242436',
+    rooftile:'#1a1a2e', roofhi:'#2e2e44',
+    chimneydk:'#0e0e18', smoke:'#555566',
+    gravel:'#2a2a3a', gravelhi:'#3a3a4e',
+    neon_r:'#ff2244', neon_g:'#22ff88', neon_b:'#4488ff',
+    neon_p:'#cc22ff', neon_y:'#ffee00',
+    couch:'#7722aa', couchlt:'#9944cc', couchdk:'#551188',
+    rug:'#331166', ruglt:'#553388',
+    pcb:'#0a3a1a', pcblt:'#1a5a2a', trace:'#22ff88',
+    solder:'#ccddcc', chip:'#111111', chippin:'#888866',
+  };
+
+  // ── PIXEL SIZE ────────────────────────────────────────
+  const P=4;
+  function f(lx,ly,lw,lh,col){ ctx.fillStyle=col; ctx.fillRect(lx*P,ly*P,lw*P,lh*P); }
+  function rr(x,y,w,h,col){ ctx.fillStyle=col; ctx.fillRect(x,y,w,h); }
+  function lp(lx,ly,col){ f(lx,ly,1,1,col); }
+
+  // ── TEXT ─────────────────────────────────────────────
+  function txt(s,x,y,col,size=8,align='left'){
+    ctx.save();ctx.fillStyle=col;ctx.font=`bold ${size}px "Courier New",monospace`;
+    ctx.textAlign=align;ctx.textBaseline='top';ctx.fillText(s,x,y);ctx.restore();
+  }
+  function txtC(s,y,col,size=8){ txt(s,W/2,y,col,size,'center'); }
+
+  // ── SHADOW TEXT ───────────────────────────────────────
+  function txtShadow(s,x,y,col,shadow,size=8,align='center',blur=8){
+    ctx.save();
+    ctx.shadowColor=shadow;ctx.shadowBlur=blur;
+    ctx.fillStyle=col;ctx.font=`bold ${size}px "Courier New",monospace`;
+    ctx.textAlign=align;ctx.textBaseline='top';ctx.fillText(s,x,y);
+    ctx.shadowBlur=0;ctx.restore();
+  }
+
+  // ── DIALOGUE BOX ─────────────────────────────────────
+  function dBox(lines,name){
+    // Slim translucent banner pinned to the very bottom edge so the
+    // scene art (ground, characters, props) stays fully visible above it.
+    const lineH=17;
+    const bh=Math.max(34,lines.length*lineH+16);
+    const yb=H-bh-6;
+    const bx=14,bw=W-28;
+
+    // Soft gradient fade behind the text instead of an opaque panel
+    const fadeH=Math.min(70,bh+34);
+    const g=ctx.createLinearGradient(0,H-fadeH,0,H);
+    g.addColorStop(0,'rgba(2,2,8,0)');
+    g.addColorStop(1,'rgba(2,2,10,0.88)');
+    ctx.fillStyle=g;ctx.fillRect(0,H-fadeH,W,fadeH);
+
+    // Thin accent rule above the text block
+    rr(bx,yb-2,bw,1,'rgba(240,208,0,0.5)');
+
+    if(name){
+      const nw=name.length*7+14;
+      rr(bx,yb-19,nw,15,'rgba(4,4,10,0.85)');
+      ctx.strokeStyle=C.yellow;ctx.lineWidth=1;ctx.strokeRect(bx,yb-19,nw,15);
+      txt(name,bx+6,yb-17,C.yellow,8);
+    }
+    lines.forEach((l,i)=>txt(l,bx+2,yb+i*lineH,C.cream,9));
+  }
+
+  // ── STARS ─────────────────────────────────────────────
+  const STARS=Array.from({length:80},(_,i)=>({
+    x:((i*137+31)%W), y:((i*79+7)%(H*0.7|0)),
+    b: (i%4===0)?2.5:(i%5===0)?2:1.5,
+    sp: 0.4+((i*13)%10)*0.06,
+    col: i%7===0?C.starglow2:C.starglow
+  }));
+  function drawStars(t){
+    STARS.forEach(s=>{
+      const twink=Math.sin(t*s.sp+s.x*0.02)*0.5+0.5;
+      ctx.globalAlpha=0.25+twink*0.75;
+      rr(s.x,s.y,s.b,s.b,s.col);
+    });
+    ctx.globalAlpha=1;
+  }
+
+  // ── MOON ─────────────────────────────────────────────
+  function drawMoon(cx,cy,r){
+    ctx.save();
+    const gr=ctx.createRadialGradient(cx,cy,0,cx,cy,r*4);
+    gr.addColorStop(0,'rgba(200,230,255,0.15)');gr.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gr;ctx.beginPath();ctx.arc(cx,cy,r*4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#dde8ff';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#b8c8ee';
+    ctx.beginPath();ctx.arc(cx-r*0.3,cy-r*0.2,r*0.18,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cx+r*0.2,cy+r*0.3,r*0.12,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cx+r*0.35,cy-r*0.35,r*0.08,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+
+  // ── NIGHT SKY ─────────────────────────────────────────
+  function nightSky(t,moonX=520,moonY=55){
+    const g=ctx.createLinearGradient(0,0,0,H*0.62);
+    g.addColorStop(0,'#000008');g.addColorStop(0.4,'#04041a');g.addColorStop(1,'#0a0a22');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H*0.62);
+    drawStars(t);
+    drawMoon(moonX,moonY,18);
+  }
+
+  // ── GROUND / ROAD ─────────────────────────────────────
+  function drawGround(y,h){
+    f(0,y,160,h,C.grounddk);
+    f(0,y,160,1,C.groundmid);
+    for(let i=0;i<10;i++) f(i*16+4,y+2,8,1,C.groundmid);
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  SPRITES (logical pixels, P=4, so 1lp = 4px)
+  // ═══════════════════════════════════════════════════════
+
+  // ── VICTOR — tall villain with lab coat ───────────────
+  function drawVictor(lx,ly,mood='neutral',anim=0){
+    const bob=0;
+    const walk=Math.sin(anim*0.12)*1|0;
+
+    f(lx+1,ly-3,5,3,C.black);   f(lx+8,ly-3,5,3,C.black);
+    f(lx,ly-3,2,2,C.dkgrey);    f(lx+12,ly-3,2,2,C.dkgrey);
+
+    f(lx+2,ly-13,4,11,C.walldk); f(lx+8,ly-13,4,11,C.walldk);
+    f(lx+3,ly-13,2,11,C.dkgrey); f(lx+9,ly-13,2,11,C.dkgrey);
+
+    f(lx+1,ly-14,12,2,C.dkgrey);
+    f(lx+6,ly-14,2,2,C.grey);
+
+    f(lx,ly-28,14,15,C.ltgrey);
+    f(lx,ly-28,2,15,C.grey);
+    f(lx+12,ly-28,2,15,C.grey);
+    f(lx+3,ly-28,4,12,C.walldk);
+    f(lx+7,ly-28,4,12,C.walldk);
+    f(lx+4,ly-28,6,14,C.dkgrey);
+    f(lx+5,ly-26,4,1,C.walldk); f(lx+5,ly-23,4,1,C.walldk); f(lx+5,ly-20,4,1,C.walldk);
+    f(lx+2,ly-29,4,3,C.ltgrey); f(lx+8,ly-29,4,3,C.ltgrey);
+    f(lx+3,ly-30,3,2,C.ltgrey); f(lx+8,ly-30,3,2,C.ltgrey);
+
+    const la=Math.sin(anim*0.12)*1.5|0;
+    f(lx-3,ly-27+la,4,13,C.ltgrey);
+    f(lx+13,ly-27-la,4,13,C.ltgrey);
+    f(lx-3,ly-28+la,4,2,C.grey);
+    f(lx+13,ly-28-la,4,2,C.grey);
+
+    f(lx-3,ly-15+la,4,4,C.skin);
+    f(lx+13,ly-15-la,4,4,C.skin);
+    f(lx-2,ly-14+la,2,2,C.skindark);
+    f(lx+14,ly-14-la,2,2,C.skindark);
+
+    f(lx+4,ly-31,6,4,C.skin);
+    f(lx+4,ly-31,1,4,C.skindark); f(lx+9,ly-31,1,4,C.skindark);
+
+    f(lx+2,ly-43,10,12,C.skin);
+    f(lx+2,ly-43,2,12,C.skindark);
+    f(lx+10,ly-43,2,12,C.skindark);
+
+    f(lx+1,ly-41,2,4,C.skin);  f(lx+11,ly-41,2,4,C.skin);
+    f(lx+1,ly-40,1,2,C.skindark); f(lx+12,ly-40,1,2,C.skindark);
+
+    f(lx+2,ly-43,10,4,C.hairdark);
+    f(lx+3,ly-43,8,2,C.hairbrown);
+    f(lx+5,ly-44,4,2,C.hairbrown);
+    f(lx+6,ly-45,2,2,C.hairdark);
+
+    f(lx+3,ly-39,4,4,C.dkgrey);
+    f(lx+7,ly-39,4,4,C.dkgrey);
+    f(lx+6,ly-38,1,2,C.black);
+    f(lx+4,ly-38,2,2,C.blue);
+    f(lx+8,ly-38,2,2,C.blue);
+    f(lx+4,ly-38,1,1,C.ltblue);
+    f(lx+8,ly-38,1,1,C.ltblue);
+    f(lx+2,ly-38,1,2,C.dkgrey);
+    f(lx+11,ly-38,1,2,C.dkgrey);
+
+    f(lx+6,ly-36,2,3,C.skindark);
+    f(lx+7,ly-34,2,1,C.skinshad);
+
+    f(lx+3,ly-36,1,2,C.skinshad);
+    f(lx+10,ly-36,1,2,C.skinshad);
+
+    if(mood==='evil'){
+      f(lx+3,ly-33,8,1,C.dkred);
+      f(lx+3,ly-32,2,1,C.dkred);  f(lx+9,ly-32,2,1,C.dkred);
+      f(lx+4,ly-32,1,1,C.skinshad); f(lx+8,ly-32,1,1,C.skinshad);
+    } else if(mood==='laugh'){
+      f(lx+3,ly-33,8,2,C.black);
+      f(lx+4,ly-33,6,1,C.white);
+      f(lx+4,ly-32,6,1,C.dkgrey);
+      f(lx+4,ly-31,1,1,C.skinshad);f(lx+9,ly-31,1,1,C.skinshad);
+    } else {
+      f(lx+4,ly-33,6,1,C.skindark);
+    }
+
+    f(lx+9,ly-37,2,1,C.skinshad);
+    f(lx+10,ly-36,1,2,C.skinshad);
+  }
+
+  // ── MAX — teen hero, round face, hoodie ───────────────
+  function drawMax(lx,ly,mood='curious',anim=0){
+    const bob=Math.sin(anim*0.18)*0.7|0;
+    const walk=Math.sin(anim*0.18)*1|0;
+
+    f(lx+1,ly-3,5,3,C.white); f(lx+8,ly-3,5,3,C.white);
+    f(lx,ly-4,7,2,C.ltgrey);  f(lx+7,ly-4,7,2,C.ltgrey);
+    f(lx,ly-3,2,3,C.grey);    f(lx+11,ly-3,2,3,C.grey);
+    f(lx+2,ly-2,3,1,C.ltblue);f(lx+9,ly-2,3,1,C.ltblue);
+
+    f(lx+2,ly-14,4,12,C.blue); f(lx+8,ly-14,4,12,C.blue);
+    f(lx+3,ly-14,2,12,C.ltblue); f(lx+9,ly-14,2,12,C.ltblue);
+    f(lx+2,ly-14,1,12,C.skyblue); f(lx+8,ly-14,1,12,C.skyblue);
+    f(lx+5,ly-14,1,6,C.dkgrey);
+
+    f(lx+1,ly-25+bob,12,12,C.ltpurple);
+    f(lx+1,ly-25+bob,2,12,C.purple);
+    f(lx+11,ly-25+bob,2,12,C.purple);
+    f(lx+3,ly-25+bob,8,1,C.ltpurple);
+    f(lx+3,ly-17+bob,8,5,C.purple);
+    f(lx+4,ly-16+bob,6,3,C.dkpurple);
+    f(lx+7,ly-17+bob,1,5,C.purple);
+    f(lx+6,ly-24+bob,2,10,C.grey);
+    f(lx+6,ly-24+bob,2,1,C.ltgrey);
+
+    const la=Math.sin(anim*0.18)*1.5|0;
+    f(lx-3,ly-24+bob+la,4,10,C.ltpurple);
+    f(lx+13,ly-24+bob-la,4,10,C.ltpurple);
+    f(lx-3,ly-24+bob+la,2,10,C.purple);
+    f(lx+15,ly-24+bob-la,2,10,C.purple);
+    f(lx-3,ly-15+bob+la,4,2,C.purple);
+    f(lx+13,ly-15+bob-la,4,2,C.purple);
+
+    f(lx-3,ly-14+bob+la,4,5,C.skin);
+    f(lx+13,ly-14+bob-la,4,5,C.skin);
+    f(lx-2,ly-13+bob+la,2,3,C.skindark);
+    f(lx+14,ly-13+bob-la,2,3,C.skindark);
+
+    f(lx+5,ly-27+bob,4,3,C.skin);
+    f(lx+5,ly-27+bob,1,3,C.skindark);
+    f(lx+8,ly-27+bob,1,3,C.skindark);
+
+    f(lx+2,ly-38+bob,10,11,C.skin);
+    f(lx+2,ly-38+bob,2,11,C.skindark);
+    f(lx+10,ly-38+bob,2,11,C.skindark);
+    f(lx+3,ly-38+bob,8,1,C.skinlit);
+
+    f(lx+1,ly-36+bob,2,4,C.skin);  f(lx+11,ly-36+bob,2,4,C.skin);
+    f(lx+1,ly-35+bob,1,2,C.skindark); f(lx+12,ly-35+bob,1,2,C.skindark);
+
+    f(lx+2,ly-38+bob,10,5,C.hairbrown);
+    f(lx+3,ly-39+bob,3,3,C.hairbrown);
+    f(lx+8,ly-40+bob,4,3,C.hairbrown);
+    f(lx+5,ly-41+bob,3,2,C.hairbrown);
+    f(lx+6,ly-42+bob,1,2,C.hairdark);
+    f(lx+3,ly-39+bob,2,2,C.hairdark);
+    f(lx+9,ly-40+bob,2,2,C.hairdark);
+    f(lx+4,ly-38+bob,2,1,C.hairlt);
+
+    if(mood==='scared'||mood==='wonder'){
+      f(lx+3,ly-34+bob,3,1,C.hairbrown); f(lx+8,ly-34+bob,3,1,C.hairbrown);
+      f(lx+3,ly-35+bob,2,1,C.hairdark);  f(lx+9,ly-35+bob,2,1,C.hairdark);
+    } else {
+      f(lx+3,ly-34+bob,3,1,C.hairbrown); f(lx+8,ly-34+bob,3,1,C.hairbrown);
+    }
+
+    if(mood==='scared'){
+      f(lx+3,ly-33+bob,4,4,C.white);  f(lx+8,ly-33+bob,4,4,C.white);
+      f(lx+4,ly-32+bob,2,2,C.black);  f(lx+9,ly-32+bob,2,2,C.black);
+      f(lx+4,ly-32+bob,1,1,C.white);  f(lx+9,ly-32+bob,1,1,C.white);
+      f(lx+2,ly-30+bob,1,3,C.ltblue); f(lx+12,ly-29+bob,1,2,C.ltblue);
+    } else if(mood==='wonder'){
+      f(lx+3,ly-33+bob,4,4,C.white);  f(lx+8,ly-33+bob,4,4,C.white);
+      f(lx+4,ly-32+bob,2,2,C.black);  f(lx+9,ly-32+bob,2,2,C.black);
+      f(lx+4,ly-33+bob,1,1,C.yellow); f(lx+9,ly-33+bob,1,1,C.yellow);
+      f(lx+4,ly-31+bob,1,1,C.ltblue); f(lx+9,ly-31+bob,1,1,C.ltblue);
+    } else {
+      f(lx+3,ly-33+bob,4,3,C.white);  f(lx+8,ly-33+bob,4,3,C.white);
+      f(lx+4,ly-33+bob,2,2,C.black);  f(lx+9,ly-33+bob,2,2,C.black);
+      f(lx+4,ly-33+bob,1,1,C.ltblue); f(lx+9,ly-33+bob,1,1,C.ltblue);
+    }
+    f(lx+3,ly-34+bob,4,1,C.skindark); f(lx+8,ly-34+bob,4,1,C.skindark);
+
+    f(lx+6,ly-31+bob,2,2,C.skindark);
+    f(lx+5,ly-30+bob,1,1,C.skinshad); f(lx+8,ly-30+bob,1,1,C.skinshad);
+
+    if(mood==='scared'){
+      f(lx+4,ly-28+bob,6,3,C.black);
+      f(lx+5,ly-28+bob,4,1,C.white);
+      f(lx+5,ly-27+bob,4,2,C.dkgrey);
+    } else if(mood==='wonder'){
+      f(lx+4,ly-28+bob,6,2,C.black);
+      f(lx+5,ly-28+bob,4,1,C.white);
+    } else {
+      f(lx+4,ly-28+bob,6,1,C.skindark);
+      f(lx+5,ly-27+bob,3,1,C.skinshad);
+    }
+
+    f(lx+1,ly-38+bob,2,3,C.purple);
+    f(lx+11,ly-38+bob,2,3,C.purple);
+  }
+
+  // ── HOUSE — 2-storey, detailed ───────────────────────
+  function drawHouse(lx,ly,lw,lh,lit=true,t=0){
+    f(lx,ly,lw,lh,C.wall);
+    for(let row=0;row<lh;row+=3){
+      const off=(Math.floor(row/3)%2)*4;
+      for(let bx=off;bx<lw;bx+=8){
+        f(lx+bx,ly+row,7,2,C.walllt);
+        f(lx+bx,ly+row+2,7,1,C.wallbrick);
+      }
+    }
+    f(lx,ly,2,lh,C.wallhi); f(lx+lw-2,ly,2,lh,C.wallhi);
+  }
+
+  // ── ROOF ─────────────────────────────────────────────
+  function drawRoof(lx,ly,lw){
+    for(let i=0;i<=8;i++){
+      f(lx+i*2,ly-i,lw-i*4,1+i,C.rooftile);
+      if(i%2===0) f(lx+i*2,ly-i,lw-i*4,1,C.roofhi);
+    }
+    f(lx-2,ly,lw+4,3,C.walldk);
+    f(lx-2,ly,lw+4,1,C.grey);
+  }
+
+  // ── WINDOW ───────────────────────────────────────────
+  function drawWindow(lx,ly,lw,lh,warm=true,flicker=false){
+    f(lx,ly,lw,lh,C.walldk);
+    f(lx+1,ly+1,lw-2,lh-2,warm?(flicker?C.amber:C.winwarm):C.winblue);
+    f(lx+(lw/2|0)-1,ly,2,lh,C.walldk);
+    f(lx,ly+(lh/2|0)-1,lw,2,C.walldk);
+    if(warm){
+      f(lx+1,ly+1,lw-2,1,'#ffffdd');
+      f(lx+1,ly+1,1,lh-2,'#ffffdd');
+    }
+    f(lx-2,ly,2,lh,C.walldk);
+    f(lx+lw,ly,2,lh,C.walldk);
+    f(lx-1,ly+lh,lw+2,2,C.grey);
+  }
+
+  // ── BOOKSHELF ─────────────────────────────────────────
+  const BKCOLS=[C.red,C.blue,C.ltgreen,C.orange,C.purple,C.cyan,C.gold,C.ltred,C.ltblue,C.green];
+  function drawShelf(lx,ly,shelves=3,booksPerShelf=9){
+    f(lx,ly,booksPerShelf*3+4,shelves*10+4,C.wooddk);
+    f(lx,ly,2,shelves*10+4,C.wood);
+    f(lx+booksPerShelf*3+2,ly,2,shelves*10+4,C.wood);
+    for(let s=0;s<shelves;s++){
+      f(lx,ly+s*10+8,booksPerShelf*3+4,2,C.woodlt);
+      f(lx,ly+s*10+9,booksPerShelf*3+4,1,C.wooddk);
+      for(let b=0;b<booksPerShelf;b++){
+        const bc=BKCOLS[(s*booksPerShelf+b)%BKCOLS.length];
+        const bh=5+((s*3+b*7)%4);
+        const bw=2;
+        f(lx+2+b*3,ly+s*10+(8-bh),bw,bh,bc);
+        f(lx+2+b*3,ly+s*10+(8-bh),1,bh,'rgba(255,255,255,0.2)');
+        f(lx+2+b*3,ly+s*10+(8-bh),bw,1,C.cream);
+        f(lx+2+b*3+bw,ly+s*10+(8-bh),1,bh,C.wooddk);
+      }
+    }
+    f(lx,ly,booksPerShelf*3+4,2,C.woodlt);
+  }
+
+  // ── MONITOR / COMPUTER ───────────────────────────────
+  function drawComputer(lx,ly,screenContent='off',t=0){
+    ctx.globalAlpha=0.4;
+    f(lx+2,ly+2,28,20,C.black);
+    ctx.globalAlpha=1;
+    f(lx,ly,28,20,C.dkgrey);
+    f(lx+1,ly+1,26,16,C.black);
+    if(screenContent==='off'){
+      f(lx+2,ly+2,24,14,C.black);
+    } else if(screenContent==='glow'){
+      f(lx+2,ly+2,24,14,C.devbg);
+      // Scanlines for CRT texture
+      for(let sl=0;sl<14;sl+=2) f(lx+2,ly+2+sl,24,1,'rgba(0,20,0,0.4)');
+      // Terminal text — short broken segments per line so it reads as code,
+      // not solid stripes. Each line is several short word-like chunks.
+      const codeRows=[
+        [[1,3,C.ltgreen],[5,2,C.grey],[8,4,C.ltgreen]],
+        [[1,2,C.grey],[4,5,C.cyan],[10,2,C.grey]],
+        [[1,6,C.ltgreen],[8,3,C.grey]],
+        [[1,2,C.grey],[4,2,C.grey],[7,6,C.ltgreen]],
+        [[1,4,C.cyan],[6,4,C.grey]],
+      ];
+      codeRows.forEach((row,i)=>{
+        row.forEach(([cx,cw,cc])=>f(lx+2+cx,ly+3+i*2,cw,1,cc));
+      });
+      // Blinking cursor at the prompt line
+      if(t%40<20) f(lx+3,ly+14,2,1,C.ltgreen);
+      f(lx+2,ly+14,1,1,C.ltgreen);
+    } else if(screenContent==='booksole'){
+      f(lx+2,ly+2,24,14,C.devbg);
+      // BOOKSOLE wordmark, blocky
+      f(lx+4,ly+5,20,2,C.yellow);
+      f(lx+4,ly+6,20,1,C.gold);
+      // Broken code-style lines beneath, not solid bars
+      [[1,5,C.ltgreen],[7,3,C.grey],[11,4,C.ltblue]].forEach(([cx,cw,cc])=>f(lx+2+cx,ly+9,cw,1,cc));
+      [[1,3,C.grey],[5,6,C.ltblue]].forEach(([cx,cw,cc])=>f(lx+2+cx,ly+11,cw,1,cc));
+      if(t%30<15) f(lx+3,ly+13,3,1,C.ltblue);
+      const scan=(t*2)%14;
+      ctx.globalAlpha=0.1;
+      f(lx+2,ly+2+scan,24,2,C.white);
+      ctx.globalAlpha=1;
+    }
+    f(lx+11,ly+18,6,1,C.grey);
+    f(lx+10,ly+17,8,1,C.black);
+    f(lx+11,ly+20,6,4,C.dkgrey);
+    f(lx+7,ly+24,14,2,C.grey);
+    f(lx+7,ly+25,14,1,C.dkgrey);
+    const on=screenContent!=='off';
+    f(lx+25,ly+1,2,2,on?C.ltgreen:C.dkgrey);
+  }
+
+  // ── BOOKSOLE CARTRIDGE ───────────────────────────────
+  function drawCartridge(lx,ly,glowing=false,t=0){
+    if(glowing){
+      const pulse=Math.sin(t*0.1)*6+14;
+      ctx.shadowColor=C.yellow;ctx.shadowBlur=pulse;
+    }
+    f(lx,ly,20,14,C.devbg);
+    f(lx+1,ly+1,18,11,C.devlit);
+    f(lx+2,ly+2,16,7,C.yellow);
+    f(lx+2,ly+3,16,1,C.white);
+    f(lx+2,ly+8,16,1,C.gold);
+    f(lx+3,ly+4,14,1,C.walldk);
+    f(lx+4,ly+6,10,1,C.amber);
+    f(lx+2,ly+13,16,3,C.dkgrey);
+    for(let i=0;i<7;i++) f(lx+3+i*2,ly+13,1,3,C.black);
+    f(lx,ly,1,1,C.black); f(lx+19,ly,1,1,C.black);
+    f(lx,ly+2,2,8,C.dkgrey);
+    ctx.shadowBlur=0;
+  }
+
+  // ── PACKAGE BOX ──────────────────────────────────────
+  function drawPackage(lx,ly,open=false){
+    ctx.globalAlpha=0.3;
+    f(lx+2,ly+2,26,20,C.black);
+    ctx.globalAlpha=1;
+    f(lx,ly,26,18,C.pkg);
+    f(lx,ly,26,2,C.pkglt);
+    f(lx,ly+16,26,2,C.pkgdk);
+    f(lx+24,ly,2,18,C.pkgdk);
+    f(lx+11,ly,4,18,C.pkglt);
+    f(lx,ly+7,26,4,C.pkglt);
+    f(lx+2,ly+3,14,10,C.page);
+    f(lx+3,ly+4,12,1,C.pagedk);
+    f(lx+3,ly+6,10,1,C.walldk);
+    f(lx+3,ly+8,8,1,C.dkred);
+    f(lx+3,ly+10,6,1,C.walldk);
+    if(open){
+      f(lx,ly-5,12,6,C.pkg);
+      f(lx+14,ly-5,12,6,C.pkglt);
+      f(lx,ly-7,26,3,C.pkgdk);
+      f(lx+1,ly-6,10,5,C.pkglt);
+    }
+  }
+
+  // ── DESK LAMP ─────────────────────────────────────────
+  function drawLamp(lx,ly,on=true,t=0){
+    f(lx+2,ly+18,6,2,C.dkgrey);
+    f(lx+1,ly+19,8,1,C.grey);
+    f(lx+4,ly+8,2,11,C.dkgrey);
+    f(lx+1,ly+8,4,2,C.dkgrey);
+    f(lx+1,ly+2,2,7,C.dkgrey);
+    f(lx-1,ly,8,5,C.gold);
+    f(lx-2,ly+1,10,4,C.amber);
+    f(lx-1,ly,10,1,C.lamp);
+    if(on){
+      const alpha=0.10+Math.sin(t*0.06)*0.03;
+      ctx.globalAlpha=alpha;
+      ctx.beginPath();
+      ctx.moveTo((lx+3)*P,(ly+4)*P);
+      ctx.lineTo((lx-10)*P,(ly+26)*P);
+      ctx.lineTo((lx+16)*P,(ly+26)*P);
+      ctx.closePath();
+      ctx.fillStyle=C.winwarm;ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.globalAlpha=0.18;
+      f(lx-6,ly+22,16,2,C.winwarm);
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // ── BOOK MONSTER ─────────────────────────────────────
+  function drawBookMonster(lx,ly,t){
+    const fl=Math.sin(t*0.10)*1.5|0;
+    const angry=Math.sin(t*0.08)>0.3;
+
+    f(lx,ly+fl,12,16,C.page);
+    f(lx+14,ly+fl,12,16,C.page);
+    f(lx+11,ly-2+fl,4,20,C.pageshadow);
+    f(lx+12,ly-1+fl,2,19,C.pagedk);
+
+    for(let row=0;row<6;row++){
+      f(lx+1,ly+3+row*2+fl,10,1,C.pagedk);
+      f(lx+15,ly+3+row*2+fl,10,1,C.pagedk);
+    }
+    f(lx,ly+14+fl,3,2,C.pageshadow);
+    f(lx+23,ly+14+fl,3,2,C.pageshadow);
+
+    f(lx+1,ly+3+fl,5,4,C.black);
+    f(lx+2,ly+4+fl,3,2,C.dkred);
+    f(lx+3,ly+4+fl,2,2,C.red);
+    f(lx+15,ly+3+fl,5,4,C.black);
+    f(lx+16,ly+4+fl,3,2,C.dkred);
+    f(lx+17,ly+4+fl,2,2,C.red);
+    f(lx+2,ly+4+fl,1,1,C.white);
+    f(lx+16,ly+4+fl,1,1,C.white);
+
+    f(lx+11,ly+4+fl,4,3,C.pageshadow);
+
+    const mo=angry?8:10;
+    f(lx+2,ly+mo+fl,22,3,C.black);
+    [0,3,6,9,12,15,18].forEach(i=>f(lx+2+i,ly+mo+fl,2,2,C.white));
+    [1,4,7,10,13,16].forEach(i=>f(lx+3+i,ly+mo+2+fl,2,2,C.cream));
+    f(lx+2,ly+mo+fl,22,1,C.dkred);
+
+    const tw=Math.sin(t*0.08+1)*2|0;
+    f(lx-6,ly+7+fl+tw,6,3,C.pagedk);
+    f(lx-8,ly+9+fl+tw,3,4,C.pageshadow);
+    f(lx+26,ly+7+fl-tw,6,3,C.pagedk);
+    f(lx+27,ly+9+fl-tw,3,4,C.pageshadow);
+    f(lx-9,ly+8+fl+tw,2,1,C.dkgrey);
+    f(lx-9,ly+10+fl+tw,2,1,C.dkgrey);
+    f(lx+29,ly+8+fl-tw,2,1,C.dkgrey);
+    f(lx+29,ly+10+fl-tw,2,1,C.dkgrey);
+
+    ctx.globalAlpha=0.15;
+    f(lx+2,ly+18+fl,22,2,C.black);
+    ctx.globalAlpha=1;
+  }
+
+  // ── DUMMY — living ventriloquist puppet ──────────────
+  // Wooden joints, painted grin, origin = feet at (lx,ly)
+  function drawDummy(lx,ly,t){
+    const tilt=Math.sin(t*0.05)*1|0;
+    const jaw=Math.sin(t*0.3)>0.2?2:0; // jaw clacks open
+
+    // Shoes — painted wood
+    f(lx,ly-3,5,3,C.black); f(lx+7,ly-3,5,3,C.black);
+    // Legs — jointed, wood-grain
+    f(lx+1,ly-13,4,10,C.wooddk); f(lx+7,ly-13,4,10,C.wooddk);
+    f(lx+2,ly-13,2,10,C.wood);   f(lx+8,ly-13,2,10,C.wood);
+    f(lx+2,ly-8,3,1,C.black);    f(lx+8,ly-8,3,1,C.black); // knee joint line
+    // Suit jacket — little tuxedo
+    f(lx,ly-24,12,11,C.dkgrey);
+    f(lx+1,ly-24,2,11,C.walldk); f(lx+9,ly-24,2,11,C.walldk);
+    f(lx+4,ly-24,4,11,C.white);  // shirt front
+    f(lx+5,ly-22,2,2,C.red);     // bow tie
+    // Arms — jointed wood, dangling
+    const aSwing=Math.sin(t*0.08)*2|0;
+    f(lx-3,ly-23+aSwing,3,11,C.dkgrey);
+    f(lx+12,ly-23-aSwing,3,11,C.dkgrey);
+    f(lx-3,ly-13+aSwing,3,3,C.wood); // wooden hand L
+    f(lx+12,ly-13-aSwing,3,3,C.wood); // wooden hand R
+    f(lx-2,ly-12+aSwing,1,1,C.wooddk);
+    f(lx+13,ly-12-aSwing,1,1,C.wooddk);
+    // Neck joint
+    f(lx+4,ly-27+tilt,4,3,C.skin);
+    f(lx+4,ly-27+tilt,4,1,C.black); // joint seam
+    // Head — painted wood, oversized
+    f(lx+1+tilt,ly-39+tilt,10,12,C.skinlit);
+    f(lx+1+tilt,ly-39+tilt,1,12,C.skindark);
+    f(lx+10+tilt,ly-39+tilt,1,12,C.skindark);
+    // Painted hair — slick side part
+    f(lx+1+tilt,ly-39+tilt,10,3,C.hairdark);
+    f(lx+2+tilt,ly-39+tilt,2,1,C.black); // part line
+    // Rosy painted cheeks
+    f(lx+2+tilt,ly-32+tilt,2,2,C.red);
+    f(lx+8+tilt,ly-32+tilt,2,2,C.red);
+    // Wide painted-on eyes — always open, glassy
+    f(lx+2+tilt,ly-34+tilt,3,3,C.white); f(lx+7+tilt,ly-34+tilt,3,3,C.white);
+    f(lx+3+tilt,ly-34+tilt,2,2,C.black); f(lx+8+tilt,ly-34+tilt,2,2,C.black);
+    f(lx+3+tilt,ly-34+tilt,1,1,C.white); f(lx+8+tilt,ly-34+tilt,1,1,C.white); // glassy glint
+    // Hinged jaw — clacks open showing the seam
+    f(lx+2+tilt,ly-30+tilt,7,2+jaw,C.black);
+    f(lx+3+tilt,ly-30+tilt,5,1,C.dkred); // painted grin line
+    if(jaw){ f(lx+3+tilt,ly-29+tilt+jaw,5,1,C.white); } // teeth flash when jaw drops
+    // Crack down the cheek (creepy detail)
+    f(lx+7+tilt,ly-37+tilt,1,4,C.skindark);
+  }
+
+  // ── HAUNTED MASK — floating carved mask, glowing eyes ─
+  // origin: centre point (lx,ly)
+  function drawHauntedMask(lx,ly,t){
+    const fl=Math.sin(t*0.09)*2|0;
+    const pulse=Math.sin(t*0.15)*0.5+0.5;
+    // Glow halo
+    ctx.save();
+    ctx.shadowColor=C.ltred;ctx.shadowBlur=10+pulse*6;
+    // Mask face — carved, leathery green-grey
+    f(lx,ly+fl,14,16,C.dkgreen);
+    f(lx+1,ly+1+fl,12,14,C.green);
+    // Jagged carved edges
+    [0,3,6,9,12].forEach(i=>f(lx+i,ly+fl,2,1,C.dkgreen));
+    [0,3,6,9,12].forEach(i=>f(lx+i,ly+15+fl,2,1,C.dkgreen));
+    // Forehead ridges
+    f(lx+2,ly+3+fl,10,1,C.dkgreen);
+    f(lx+3,ly+5+fl,8,1,C.dkgreen);
+    // Glowing eye sockets
+    f(lx+2,ly+6+fl,3,3,C.black);
+    f(lx+9,ly+6+fl,3,3,C.black);
+    ctx.globalAlpha=0.7+pulse*0.3;
+    f(lx+3,ly+7+fl,1,1,C.ltred);
+    f(lx+10,ly+7+fl,1,1,C.ltred);
+    ctx.globalAlpha=1;
+    // Snarling carved mouth, sharp teeth
+    f(lx+2,ly+11+fl,10,3,C.black);
+    [0,2,4,6,8].forEach(i=>f(lx+2+i,ly+11+fl,1,2,C.cream));
+    // Nose ridge
+    f(lx+6,ly+8+fl,2,3,C.dkgreen);
+    ctx.restore();
+    // Floating tatter / strap beneath
+    ctx.globalAlpha=0.4;
+    f(lx+2,ly+16+fl,2,4,C.dkgreen);
+    f(lx+10,ly+16+fl,2,4,C.dkgreen);
+    ctx.globalAlpha=1;
+  }
+
+  // ── GARDEN GNOME — squat, pointed hat, lurking ───────
+  // origin: feet at (lx,ly)
+  function drawGnome(lx,ly,t){
+    const creep=Math.sin(t*0.04)*1|0; // slow inching motion
+    // Boots
+    f(lx,ly-2,4,2,C.wooddk); f(lx+5,ly-2,4,2,C.wooddk);
+    // Stubby legs
+    f(lx+1,ly-6,3,4,C.blue); f(lx+6,ly-6,3,4,C.blue);
+    // Round body — tunic
+    f(lx,ly-15+creep,9,9,C.red);
+    f(lx,ly-15+creep,2,9,C.dkred);
+    f(lx+7,ly-15+creep,2,9,C.dkred);
+    f(lx+1,ly-12+creep,7,1,C.gold); // belt
+    // Arms
+    f(lx-2,ly-14+creep,3,6,C.red);
+    f(lx+8,ly-14+creep,3,6,C.red);
+    f(lx-2,ly-9+creep,3,3,C.skin);
+    f(lx+8,ly-9+creep,3,3,C.skin);
+    // Beard — bushy white
+    f(lx+1,ly-15+creep,7,5,C.cream);
+    f(lx+2,ly-12+creep,5,3,C.white);
+    // Head
+    f(lx+2,ly-21+creep,5,5,C.skin);
+    // Pointed hat
+    f(lx+1,ly-22+creep,7,2,C.red);
+    f(lx+2,ly-25+creep,5,4,C.red);
+    f(lx+3,ly-27+creep,3,3,C.red);
+    f(lx+4,ly-29+creep,1,2,C.dkred);
+    f(lx+1,ly-22+creep,7,1,C.gold); // hat brim trim
+    // Glowing malevolent eyes (the tell that it's not just a statue)
+    ctx.globalAlpha=0.6+Math.sin(t*0.2)*0.4;
+    f(lx+2,ly-19+creep,1,1,C.ltgreen);
+    f(lx+5,ly-19+creep,1,1,C.ltgreen);
+    ctx.globalAlpha=1;
+  }
+
+  // ── DIGITAL LIBRARY CORRIDOR ─────────────────────────
+  function drawDigiLibrary(t){
+    f(0,72,160,18,C.bg0);
+    for(let i=0;i<160;i+=8) f(i,72,1,18,C.devlit);
+    for(let j=72;j<90;j+=4) f(0,j,160,1,C.devlit);
+    for(let i=0;i<160;i+=8) for(let j=72;j<90;j+=4) f(i,j,1,1,C.ltblue);
+
+    f(0,0,160,4,C.devlit);
+    f(0,1,160,2,C.ltblue);
+    for(let i=0;i<5;i++){
+      const lx=20+i*24;
+      ctx.globalAlpha=0.6+Math.sin(t*0.05+i)*0.2;
+      f(lx,0,12,4,C.cyan);
+      ctx.globalAlpha=1;
+    }
+
+    // Perspective lines converge on a distant point near the top of the
+    // corridor — high enough that they read as architecture, not a
+    // crosshair pointed at the characters standing in the foreground
+    ctx.save();ctx.strokeStyle=C.ltblue;ctx.lineWidth=1;ctx.globalAlpha=0.08;
+    for(let i=0;i<6;i++){
+      const bx=i*32;
+      ctx.beginPath();ctx.moveTo(bx*P,(72)*P);ctx.lineTo((80)*P,(2)*P);ctx.stroke();
+    }
+    ctx.globalAlpha=1;ctx.restore();
+
+    for(let s=0;s<3;s++){
+      const ly=6+s*22;
+      f(0,ly,5,18,C.wooddk);
+      f(0,ly+16,5,2,C.woodlt);
+      for(let b=0;b<5;b++) f(1,ly+2+b*3,3,2,BKCOLS[(s*5+b)%BKCOLS.length]);
+      f(155,ly,5,18,C.wooddk);
+      f(155,ly+16,5,2,C.woodlt);
+      for(let b=0;b<5;b++) f(156,ly+2+b*3,3,2,BKCOLS[(s*5+b+5)%BKCOLS.length]);
+    }
+
+    for(let i=0;i<8;i++){
+      const fx=10+((i*37+t/2|0)%(140))|0;
+      const fy=10+((i*23+t/3|0)%(60))|0;
+      ctx.globalAlpha=0.2+Math.sin(t*0.06+i)*0.15;
+      f(fx,fy,1,2,i%2?C.ltblue:C.cyan);
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // ── CURTAINS ─────────────────────────────────────────
+  function drawCurtains(lx,ly,w,h){
+    f(lx,ly,8,h,C.curtain);
+    f(lx+1,ly,6,h,C.curtainlt);
+    f(lx+2,ly,3,h,C.curtain);
+    f(lx+3,ly,1,h,C.curtainlt);
+    f(lx+w-8,ly,8,h,C.curtain);
+    f(lx+w-7,ly,6,h,C.curtainlt);
+    f(lx+w-4,ly,3,h,C.curtain);
+  }
+
+  // ── CHIMNEY + SMOKE ───────────────────────────────────
+  function drawChimney(lx,ly,t){
+    f(lx,ly,8,14,C.walldk);
+    f(lx+1,ly,6,3,C.chimneydk);
+    f(lx,ly,1,14,C.grey);
+    for(let i=0;i<3;i++){
+      const sy=ly-4-((t/2+i*12)%20)|0;
+      const sa=0.15+i*0.05;
+      const sw=2+i;
+      ctx.globalAlpha=sa;
+      f(lx+1+i,sy,sw,sw,C.smoke);
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // ── MAILBOX ───────────────────────────────────────────
+  function drawMailbox(lx,ly){
+    f(lx+3,ly,2,14,C.dkgrey);
+    f(lx,ly-10,8,8,C.grey);
+    f(lx+1,ly-10,6,1,C.ltgrey);
+    f(lx+2,ly-10,4,8,C.ltgrey);
+    f(lx,ly-7,2,5,C.dkgrey);
+    f(lx+6,ly-5,2,3,C.ltgrey);
+    f(lx+1,ly-7,6,1,C.black);
+    // Envelopes overflowing from the slot — clustered tight to the box,
+    // not scattered above it
+    [[-2,-9],[1,-10],[3,-8],[-1,-7],[2,-6]].forEach(([ox,oy])=>{
+      f(lx+ox+3,ly+oy,5,3,C.cream);
+      f(lx+ox+4,ly+oy+1,3,1,C.pagedk);
+    });
+  }
+  // ═══════════════════════════════════════════════════════
+  //  SCENES
+  // ═══════════════════════════════════════════════════════
+
+  // ── SCENE 0 — Cinematic title splash ─────────────────
+  function sc0(t,tw){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#000008');g.addColorStop(0.5,'#020212');g.addColorStop(1,'#050518');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    drawStars(t);
+
+    if(t%180<4){
+      const sx=(t*3)%W,sy=(t*2)%100;
+      ctx.globalAlpha=0.9;
+      rr(sx,sy,28,1,C.white);
+      ctx.globalAlpha=0.4;
+      rr(sx+28,sy,14,1,C.ltgrey);
+      ctx.globalAlpha=1;
+    }
+
+    if(tw>0.5){
+      const fade=Math.min(1,(tw-0.5)*0.4);
+      ctx.globalAlpha=fade;
+      const bx=(W/P/2|0)-15, by=(H/P|0)-50;
+      f(bx+12,by-2,4,22,C.walldk);
+      f(bx+13,by-1,2,21,C.dkgrey);
+      f(bx,by,12,20,C.cream);
+      for(let i=0;i<8;i++) f(bx+1,by+2+i*2,10,1,C.pagedk);
+      f(bx,by,12,1,C.white);
+      f(bx,by,1,20,C.pageshadow);
+      f(bx+16,by,12,20,C.page);
+      for(let i=0;i<8;i++) f(bx+17,by+2+i*2,10,1,C.pagedk);
+      f(bx+16,by,12,1,C.white);
+      f(bx+27,by,1,20,C.pageshadow);
+      const gPulse=Math.sin(t*0.05)*0.05+0.12;
+      ctx.globalAlpha=fade*gPulse;
+      f(bx-2,by-2,32,24,C.yellow);
+      ctx.globalAlpha=1;
+    }
+
+    const fade=Math.min(1,tw*0.5);
+    if(fade>0){
+      ctx.globalAlpha=fade;
+      ctx.save();
+      ctx.shadowColor='#000';ctx.shadowBlur=4;
+      ctx.fillStyle=C.gold;
+      ctx.font=`bold 52px "Courier New",monospace`;
+      ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText('BOOKSOLE',W/2+3,H/2-60+3);
+      ctx.shadowColor=C.yellow;ctx.shadowBlur=30;
+      ctx.fillStyle=C.yellow;
+      ctx.fillText('BOOKSOLE',W/2,H/2-60);
+      ctx.shadowBlur=0;
+      ctx.restore();
+      ctx.globalAlpha=1;
+    }
+
+    if(tw>2.5){
+      ctx.globalAlpha=Math.min(1,(tw-2.5)*0.4);
+      txtShadow('A  T A L E  O F  I N K  &  R E V E N G E',W/2,H/2-4,C.ltgrey,C.ltblue,9,'center',4);
+      ctx.globalAlpha=1;
+    }
+
+    if(tw>5){
+      ctx.globalAlpha=Math.min(1,(tw-5)*0.35);
+      txt('BOOKSOLE STUDIOS  ·  2026',W/2,H/2+12,C.dkgrey,8,'center');
+      ctx.globalAlpha=1;
+    }
+
+    const bl=t%80<40;
+    if(tw>4){
+      ctx.globalAlpha=bl?1:0.25;
+      txtShadow('▸  CLICK  ANYWHERE  TO  BEGIN  ◂',W/2,H-30,bl?C.yellow:C.grey,C.yellow,9,'center',bl?8:0);
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // ── SCENE 1 — Victor spies on Spine's house ──────────
+  function sc1(t,tw){
+    rr(0,0,W,H,C.black);
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#000008');g.addColorStop(0.55,'#04041c');g.addColorStop(1,'#0c0c28');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    drawStars(t);
+    drawMoon(560,50,22);
+
+    drawGround(76,14);
+    f(85,76,60,14,C.groundmid);
+    for(let i=0;i<7;i++) f(90+i*8,82,5,2,C.grey);
+
+    const hx=98,hy=18,hw=62,hh=60;
+    drawHouse(hx,hy,hw,hh);
+    drawRoof(hx-2,hy,hw+4);
+    drawChimney(hx+42,hy-14,t);
+    f(hx+24,hy+36,14,hh-34,C.wooddk);
+    f(hx+25,hy+37,12,hh-36,C.wood);
+    f(hx+25,hy+38,5,7,C.winwarm);
+    f(hx+31,hy+38,5,7,C.winwarm);
+    f(hx+28,hy+55,4,4,C.gold);
+    f(hx+20,hy+hh,20,4,C.grey);
+    f(hx+20,hy+hh,20,1,C.ltgrey);
+    const flk=t%70<35;
+    drawWindow(hx+4,hy+8,16,12,true,flk&&tw>5);
+    drawWindow(hx+42,hy+8,16,12,true,flk&&tw>6);
+    drawWindow(hx+4,hy+26,16,12,true,false);
+    drawWindow(hx+42,hy+26,16,12,true,false);
+    ctx.globalAlpha=0.12;
+    f(hx+2,hy+34,22,8,C.winwarm); f(hx+40,hy+34,22,8,C.winwarm);
+    ctx.globalAlpha=1;
+    f(hx+14,hy+hh+4,34,6,C.dkgrey);
+    txt('R . L .  S P I N E',(hx+16)*P,(hy+hh+5)*P,C.yellow,7);
+    drawMailbox(hx-14,hy+hh);
+    f(hx-4,hy+hh-6,12,8,C.dkgreen);
+    f(hx-3,hy+hh-8,10,4,C.green);
+    f(hx+hw-8,hy+hh-6,12,8,C.dkgreen);
+    f(hx+hw-7,hy+hh-8,10,4,C.green);
+
+    drawHouse(0,0,84,90);
+    f(8,10,64,60,C.bg0);
+    f(6,8,68,64,C.walldk);
+    f(6,8,2,64,C.dkgrey);
+    f(72,8,2,64,C.dkgrey);
+    f(6,8,68,2,C.dkgrey);
+    f(6,70,68,2,C.dkgrey);
+    f(39,8,2,64,C.dkgrey);
+    f(6,38,68,2,C.dkgrey);
+    drawCurtains(6,8,68,64);
+    // Desk pushed to the back-left corner, well clear of Victor's head/face
+    f(16,62,40,3,C.wooddk);
+    f(16,62,40,1,C.woodlt);
+    f(16,65,4,12,C.wooddk);   f(52,65,4,12,C.wooddk);
+    drawShelf(58,12,3,4);
+    drawLamp(12,48,true,t);
+    // Victor stands well clear of the desk, centred in the window
+    drawVictor(28,84,'evil',t);
+    if(t%60<30){
+      ctx.globalAlpha=0.8;
+      f(30,46,2,1,C.ltblue);
+      ctx.globalAlpha=1;
+    }
+
+    if(tw>1){
+      const envW=Math.min(52,(tw/10)*52|0);
+      f(20,78,54,5,C.black);
+      f(20,78,54,5,C.dkgrey);
+      f(21,79,envW,3,C.red);
+      f(21,79,envW,1,'rgba(255,180,180,0.4)');
+      txt('ENVY',(6)*P,78*P,C.ltgrey,7);
+      txt(Math.min(100,tw*10|0)+'%',(78)*P,78*P,C.red,7);
+    }
+
+    const lines=tw<3?['Just look at him...']:tw<7?['Fan letters. Bestseller lists.','Everything I deserve.']:['He gets everything. I get NOTHING.','This ends NOW.'];
+    dBox(lines,'VICTOR GRIMSHAW');
+  }
+
+  // ── SCENE 2 — Victor's lab: building the BOOKSOLE ────
+  function sc2(t,tw){
+    const g=ctx.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,C.bg0);g.addColorStop(0.5,'#09091a');g.addColorStop(1,C.bg0);
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    f(0,72,160,18,C.walldk);
+    for(let i=0;i<160;i+=8) f(i,72,1,18,C.dkgrey);
+    for(let j=72;j<90;j+=4) f(0,j,160,1,C.groundmid);
+    f(0,72,160,1,C.grey);
+
+    f(0,0,160,4,C.walldk);
+    for(let i=0;i<5;i++){
+      f(i*30,0,4,4,C.dkgrey);
+      f(i*30+1,1,2,4,C.grey);
+    }
+    const flkR=t%50<35;
+    ctx.globalAlpha=flkR?0.08:0.03;
+    f(40,0,80,30,C.ltgrey);
+    ctx.globalAlpha=1;
+
+    f(8,56,144,4,C.wood);
+    f(8,56,144,1,C.woodlt);
+    f(8,60,144,1,C.wooddk);
+    f(8,61,144,12,C.woodlt);
+    f(8,56,4,16,C.wooddk); f(138,56,4,16,C.wooddk);
+
+    drawShelf(0,2,4,6);
+
+    f(44,36,44,20,C.pcb);
+    f(44,36,44,1,C.pcblt);
+    ctx.save();ctx.strokeStyle=C.trace;ctx.lineWidth=1;ctx.globalAlpha=0.5;
+    [[44*P,46*P,88*P,46*P],[55*P,36*P,55*P,56*P],[70*P,36*P,70*P,56*P],
+     [44*P,51*P,62*P,51*P],[74*P,41*P,88*P,41*P],[44*P,42*P,55*P,42*P]].forEach(([x1,y1,x2,y2])=>{
+      ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    });
+    ctx.globalAlpha=1;ctx.restore();
+    [[47,38,C.chip],[58,41,C.chip],[72,38,C.chip],[79,44,C.chip],[50,48,C.chip]].forEach(([cx,cy,cc])=>{
+      f(cx,cy,6,5,cc);
+      f(cx+1,cy+1,4,3,C.dkgrey);
+      for(let p=0;p<3;p++){
+        f(cx+1+p*2,cy+5,1,2,C.chippin);
+        f(cx+1+p*2,cy-2,1,2,C.chippin);
+      }
+      f(cx+1,cy+1,1,1,C.grey);
+    });
+    [[64,48],[82,40]].forEach(([cx,cy])=>{
+      f(cx,cy,3,4,C.solder);
+      f(cx,cy,3,1,C.ltgrey);
+    });
+
+    const gPulse=0.08+Math.sin(t*0.07)*0.05;
+    ctx.globalAlpha=gPulse;
+    f(36,30,56,32,C.yellow);
+    ctx.globalAlpha=1;
+    f(50,40,28,10,C.yellow);
+    f(50,40,28,1,C.white);
+    f(50,49,28,1,C.gold);
+    txt('BOOKSOLE',(51)*P,(42)*P,C.walldk,8);
+
+    if(t%20<14){
+      const sx=85,sy=54;
+      for(let s=0;s<3;s++){
+        const ssy=sy-((t/2+s*8)%16)|0;
+        ctx.globalAlpha=0.15+s*0.05;
+        f(sx+s,ssy,2,2,C.smoke);
+        ctx.globalAlpha=1;
+      }
+    }
+    if(t%20<10){
+      [[88,54],[90,52],[86,56],[92,55],[87,53]].forEach(([sx,sy])=>{
+        ctx.globalAlpha=0.5+Math.sin(t*0.3)*0.4;
+        f(sx,sy,1,1,t%6<3?C.yellow:C.white);
+        ctx.globalAlpha=1;
+      });
+    }
+
+    ctx.save();
+    [[C.ltblue,47,87,60,110,55,60],[C.red,51,87,58,110,58,55],
+     [C.ltgreen,44,87,52,100,52,60],[C.yellow,49,87,62,115,65,62]].forEach(([col,y1,x1,x2,xb,yb,y2])=>{
+      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.globalAlpha=0.8;
+      ctx.beginPath();ctx.moveTo(x1*P,y1*P);
+      ctx.bezierCurveTo(xb*P,y1*P,x2*P,yb*P,x2*P,y2*P);ctx.stroke();
+    });
+    ctx.globalAlpha=1;ctx.restore();
+
+    if(tw>2){
+      const fade=Math.min(1,(tw-2)*0.4);
+      ctx.globalAlpha=fade;
+      f(100,2,54,50,C.blue);
+      f(101,3,52,48,C.skyblue);
+      ctx.save();ctx.strokeStyle=C.white;ctx.lineWidth=1;ctx.globalAlpha=0.3*fade;
+      for(let i=0;i<52;i+=6){ ctx.beginPath();ctx.moveTo((102+i)*P,3*P);ctx.lineTo((102+i)*P,50*P);ctx.stroke(); }
+      for(let j=0;j<48;j+=6){ ctx.beginPath();ctx.moveTo(101*P,(4+j)*P);ctx.lineTo(153*P,(4+j)*P);ctx.stroke(); }
+      ctx.globalAlpha=1;ctx.restore();
+      f(110,10,34,28,C.blue);
+      ctx.save();ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.globalAlpha=0.9*fade;
+      ctx.strokeRect(112*P,12*P,28*P,24*P);
+      ctx.beginPath();ctx.moveTo(122*P,12*P);ctx.lineTo(122*P,36*P);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(112*P,24*P);ctx.lineTo(140*P,24*P);ctx.stroke();
+      ctx.globalAlpha=1;ctx.restore();
+      txt('BOOKSOLE mk.1',(102)*P,53*P,C.ltblue,7);
+      txt('TRAP  ALL  STORIES',(100)*P,60*P,C.ltred,7);
+      f(100,54,20,10,C.winwarm);
+      txt('DO NOT',(101)*P,55*P,C.walldk,6);
+      txt('OPEN!',(102)*P,61*P,C.dkred,6);
+      ctx.globalAlpha=1;
+    }
+
+    drawVictor(108,92,'laugh',t);
+
+    const lines=tw<3?['Mwahahaha... it\'s almost ready.']:tw<7?['"The Babysitter\'s Basement." "Camp Deadlake."','Every story Spine wrote — MINE now.']:['Face his own creations —','or be lost in the BOOKSOLE','FOREVER!'];
+    dBox(lines,'VICTOR GRIMSHAW');
+  }
+
+  // ── SCENE 3 — Package delivered to Spine's doorstep ──
+  function sc3(t,tw){
+    const g=ctx.createLinearGradient(0,0,0,H*0.6);
+    g.addColorStop(0,'#110820');g.addColorStop(0.5,'#1e0c30');g.addColorStop(1,'#2a1040');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=0.4;
+    const hg=ctx.createLinearGradient(0,H*0.45,0,H*0.6);
+    hg.addColorStop(0,'#551133');hg.addColorStop(1,'transparent');
+    ctx.fillStyle=hg;ctx.fillRect(0,H*0.45,W,H*0.15);
+    ctx.globalAlpha=1;
+    drawStars(t);
+    drawMoon(80,40,16);
+
+    drawGround(76,14);
+    for(let i=0;i<10;i++) {
+      f(64+i*3,77,2,5,C.dkgrey);
+      f(65+i*3,77,1,5,C.groundmid);
+    }
+
+    drawHouse(4,12,152,68);
+    drawRoof(2,10,156);
+    drawChimney(108,-2,t);
+    f(62,40,36,44,C.wooddk);
+    f(63,41,34,42,C.wood);
+    f(63,41,34,1,C.woodlt);
+    f(72,43,6,9,C.winwarm);
+    f(84,43,6,9,C.winwarm);
+    f(78,64,4,5,C.gold);
+    f(76,61,8,2,C.wooddk);
+    f(58,82,44,6,C.dkgrey);
+    f(59,82,42,1,C.grey);
+    f(64,84,32,4,C.dkred);
+    f(65,84,30,1,C.red);
+    drawWindow(10,18,22,16,true,false);
+    drawWindow(124,18,22,16,true,false);
+    drawWindow(10,38,22,16,true,t%60<30);
+    drawWindow(124,38,22,16,true,false);
+    ctx.globalAlpha=0.1;
+    f(8,34,26,10,C.winwarm); f(122,34,26,10,C.winwarm);
+    ctx.globalAlpha=1;
+    f(50,30,4,50,C.ltgrey);  f(50,30,4,2,C.white);
+    f(106,30,4,50,C.ltgrey); f(106,30,4,2,C.white);
+    f(38,72,16,10,C.dkgreen); f(40,68,12,6,C.green); f(42,65,8,4,C.ltgreen);
+    f(106,72,16,10,C.dkgreen);f(108,68,12,6,C.green);f(110,65,8,4,C.ltgreen);
+
+    const dropProgress=Math.min(1,tw/3);
+    const dropY=76-((1-dropProgress)*66)|0;
+    const dropX=68;
+    drawPackage(dropX, dropY, false);
+    if(dropProgress>0.8){
+      ctx.globalAlpha=0.2*(dropProgress-0.8)/0.2;
+      f(dropX-2,84,30,3,C.black);
+      ctx.globalAlpha=1;
+    }
+    if(tw>5){
+      ctx.globalAlpha=Math.abs(Math.sin(t*0.10));
+      f(76,68,2,1,C.ltred); f(77,69,1,1,C.ltred);
+      f(77,64,1,5,C.ltred); f(75,69,4,1,C.ltred);
+      ctx.globalAlpha=1;
+    }
+
+    if(tw<3){
+      const dx=130-tw*24|0;
+      f(dx,6,14,4,C.dkgrey);
+      f(dx-5,7,6,2,C.grey);
+      f(dx+14,7,6,2,C.grey);
+      f(dx+4,10,6,4,C.grey);
+      f(dx-5,6,3,1,C.ltgrey);
+      f(dx+14,6,4,1,C.ltgrey);
+      if(t%20<10) f(dx+6,10,2,2,C.ltred);
+    }
+
+    const lines=tw<2?['Something falls from the sky.','Heading for R.L. Spine\'s house.']:tw<6?['Left on the doorstep.','No postmark.  No return address.']:['\"From: V. Grimshaw.\"','Victor.  Of course.'];
+    dBox(lines,'NARRATOR');
+  }
+  // ── SCENE 4 — Living room: Max opens the package ─────
+  function sc4(t,tw){
+    f(0,0,160,90,C.bg1);
+    f(0,0,160,72,C.wall);
+    for(let i=0;i<20;i++){
+      f(i*8,0,1,72,(i%2)?C.walllt:C.wall);
+      if(i%2) for(let j=0;j<72;j+=16) f(i*8,j,1,8,C.wallbrickhi);
+    }
+    f(0,0,160,5,C.walldk);
+    f(0,3,160,1,C.grey);
+    f(0,70,160,2,C.wooddk);
+    f(0,72,160,18,C.woodlt);
+    for(let i=0;i<160;i+=14) f(i,72,1,18,C.wooddk);
+    f(0,72,160,1,C.wooddk);
+
+    f(28,72,104,16,C.rug);
+    f(30,73,100,1,C.ruglt);
+    f(30,87,100,1,C.ruglt);
+    for(let i=0;i<4;i++) f(32+i*25,74,20,12,C.dkpurple);
+    for(let i=0;i<3;i++) f(44+i*25,76,8,8,C.ruglt);
+
+    drawShelf(0,2,5,7);
+
+    f(96,50,60,26,C.couch);
+    f(96,40,60,12,C.couchlt);
+    f(94,40,4,36,C.couchdk);
+    f(154,40,4,36,C.couchdk);
+    f(94,40,4,2,C.couch);
+    f(154,40,4,2,C.couch);
+    f(97,50,58,2,C.couchdk);
+    f(97,52,28,24,C.couch); f(126,52,28,24,C.couch);
+    f(97,52,28,1,C.couchlt); f(126,52,28,1,C.couchlt);
+    f(97,52,1,24,C.couchlt); f(126,52,1,24,C.couchlt);
+    f(148,44,8,14,C.ltpurple);
+    f(149,45,6,12,C.purple);
+
+    f(98,46,58,10,C.wooddk);
+    f(98,46,58,1,C.woodlt);
+    f(98,56,4,16,C.wooddk);
+    f(148,56,4,16,C.wooddk);
+    drawComputer(104,24,tw>5?'booksole':'glow',t);
+
+    if(tw>1){
+      drawPackage(52,60,true);
+      if(tw>2){
+        const gAlpha=0.12+Math.sin(t*0.10)*0.06;
+        ctx.globalAlpha=gAlpha;
+        f(46,46,36,20,C.yellow);
+        ctx.globalAlpha=1;
+        drawCartridge(58,52,true,t);
+        if(tw>4){
+          // Hand gripping the cartridge from above — sized to match,
+          // fingers curled over the top edge rather than floating apart
+          f(60,49,16,4,C.skin);          // palm/fingers across the top edge
+          f(60,49,16,1,C.skinlit);       // knuckle highlight
+          f(61,52,2,3,C.skindark);       // finger gaps
+          f(65,52,2,3,C.skindark);
+          f(69,52,2,3,C.skindark);
+          f(73,52,2,3,C.skindark);
+          f(59,50,2,3,C.skin);           // thumb, left side
+          f(59,51,2,1,C.skinshad);
+        }
+      }
+    }
+
+    drawMax(42,90,tw>5?'wonder':tw>2?'curious':'curious',t);
+
+    const lines=tw<2?['Uncle Spine\'s not home.','But there\'s a mystery package!']:tw<5?['"BOOKSOLE" — what is this thing?','No sender. No instructions.']:tw<8?['He plugs it into the computer.','The screen explodes with light—']:['Something is very wrong.','MAX — STOP — DON\'T—!'];
+    dBox(lines,tw<8?'MAX':'UNCLE\'S NEIGHBOR');
+  }
+
+  // ── SCENE 5 — Digital vortex: the suck-in ────────────
+  function sc5(t,tw){
+    rr(0,0,W,H,C.black);
+
+    ctx.save();
+    const matChars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*';
+    for(let col=0;col<40;col++){
+      for(let drop=0;drop<3;drop++){
+        const cx2=col*(W/40);
+        const cy2=((t*2.5*(1+drop*0.4)+col*61+drop*90))%(H+20)-10;
+        const alpha=0.04+drop*0.025;
+        ctx.globalAlpha=alpha;
+        const ch=matChars[(t+col*7+drop*13)%matChars.length];
+        txt(ch,cx2,cy2,C.ltgreen,9);
+        if(drop===0){
+          ctx.globalAlpha=alpha*3;
+          txt(ch,cx2,cy2,C.white,9);
+        }
+      }
+    }
+    ctx.globalAlpha=1;
+    ctx.restore();
+
+    const vCenter={x:W/2,y:H/2};
+    if(tw>0.5){
+      const vortexSpeed=tw*0.8;
+      for(let ring=0;ring<8;ring++){
+        const rad=Math.max(4,(tw*22+ring*18+t*vortexSpeed)%(W*0.44));
+        const alpha=Math.max(0,0.7-ring*0.08-rad/(W*0.44));
+        if(alpha<=0) continue;
+        ctx.globalAlpha=alpha;
+        ctx.strokeStyle=ring%3===0?C.yellow:(ring%3===1?C.ltblue:C.purple);
+        ctx.lineWidth=ring%4===0?2:1;
+        ctx.beginPath();ctx.arc(vCenter.x,vCenter.y,rad,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    }
+    if(tw>1){
+      const coreR=8+Math.sin(t*0.2)*3;
+      const cr=ctx.createRadialGradient(vCenter.x,vCenter.y,0,vCenter.x,vCenter.y,coreR*2);
+      cr.addColorStop(0,'rgba(255,240,100,0.8)');
+      cr.addColorStop(0.4,'rgba(200,100,255,0.4)');
+      cr.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=cr;ctx.beginPath();ctx.arc(vCenter.x,vCenter.y,coreR*2,0,Math.PI*2);ctx.fill();
+    }
+
+    if(tw>0.8){
+      const maxX=((W/P/2)|0)-(tw*3.5|0);
+      const maxY=((H/P/2)|0)-(tw*2.5|0);
+      const stretch=1+tw*0.06;
+      ctx.save();
+      ctx.translate(maxX*P,(maxY+35)*P);
+      ctx.scale(1/stretch,stretch);
+      ctx.translate(-maxX*P,-(maxY+35)*P);
+      drawMax(maxX,maxY+35,'scared',t);
+      ctx.restore();
+      for(let g=1;g<=3;g++){
+        ctx.globalAlpha=0.15/g;
+        ctx.save();
+        ctx.translate((maxX+g*4)*P,(maxY+35)*P);
+        ctx.scale(1/stretch,stretch);
+        ctx.translate(-(maxX+g*4)*P,-(maxY+35)*P);
+        drawMax(maxX+g*4,maxY+35,'scared',0);
+        ctx.restore();
+      }
+      ctx.globalAlpha=1;
+    }
+
+    const flash=Math.max(0,0.9-tw*0.3);
+    if(flash>0) rr(0,0,W,H,`rgba(240,240,180,${flash})`);
+
+    if(tw>2){
+      const pulse=0.85+Math.sin(t*0.12)*0.1;
+      ctx.save();
+      ctx.shadowColor=C.yellow;ctx.shadowBlur=20*pulse;
+      ctx.globalAlpha=Math.min(1,(tw-2)*0.5);
+      txt('YOU ARE INSIDE.',W/2,H/2-22,C.yellow,20,'center');
+      ctx.shadowBlur=0;ctx.restore();
+    }
+    if(tw>4){
+      ctx.globalAlpha=Math.min(1,(tw-4)*0.5);
+      txt('The BOOKSOLE has you now.',W/2,H/2+4,C.cream,10,'center');
+      ctx.globalAlpha=1;
+    }
+    if(tw>6){
+      ctx.globalAlpha=Math.min(1,(tw-6)*0.5);
+      txt('Spine\'s creations guard every exit.',W/2,H/2+22,C.ltgrey,9,'center');
+      ctx.globalAlpha=1;
+    }
+    if(tw>8){
+      ctx.globalAlpha=Math.min(1,(tw-8)*0.8);
+      ctx.shadowColor=C.red;ctx.shadowBlur=12;
+      txt('Defeat them all — or stay FOREVER.',W/2,H/2+42,C.ltred,10,'center');
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // ── SCENE 6 — Inside the digital library: first look ─
+  function sc6(t,tw){
+    rr(0,0,W,H,C.black);
+    drawDigiLibrary(t);
+
+    const fog=ctx.createLinearGradient(0,H*0.5,0,H);
+    fog.addColorStop(0,'rgba(0,0,10,0)');fog.addColorStop(1,'rgba(0,0,15,0.92)');
+    ctx.fillStyle=fog;ctx.fillRect(0,H*0.5,W,H-H*0.5);
+    const vigL=ctx.createLinearGradient(0,0,W*0.2,0);
+    vigL.addColorStop(0,'rgba(0,0,0,0.7)');vigL.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=vigL;ctx.fillRect(0,0,W*0.2,H);
+    const vigR=ctx.createLinearGradient(W,0,W*0.8,0);
+    vigR.addColorStop(0,'rgba(0,0,0,0.7)');vigR.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=vigR;ctx.fillRect(W*0.8,0,W*0.2,H);
+
+    // Background book monsters — distant, drifting in the fog, kept high
+    // and faint so they don't compete with the foreground cast
+    if(tw>2){
+      ctx.globalAlpha=Math.min(0.4,(tw-2)*0.15);
+      drawBookMonster(14,6,t);
+      ctx.globalAlpha=1;
+    }
+    if(tw>3.5){
+      ctx.globalAlpha=Math.min(0.35,(tw-3.5)*0.15);
+      drawBookMonster(130,4,t+50);
+      ctx.globalAlpha=1;
+    }
+
+    // Foreground cast lined up along the floor, spaced apart and clear of
+    // the text band above them
+    // Garden gnome — creeping in from the left
+    if(tw>3){
+      ctx.globalAlpha=Math.min(1,(tw-3)*0.6);
+      drawGnome(14,88,t);
+      ctx.globalAlpha=1;
+    }
+
+    if(tw>1){
+      const fade=Math.min(1,(tw-1)*0.4);
+      ctx.globalAlpha=fade;
+      drawMax(70,90,'wonder',t);
+      ctx.globalAlpha=1;
+    }
+
+    // Haunted mask — floats well above head height, off to the side,
+    // clear of both Max and the narration text
+    if(tw>4.5){
+      ctx.globalAlpha=Math.min(1,(tw-4.5)*0.6);
+      drawHauntedMask(96,62+Math.sin(t*0.07)*2,t);
+      ctx.globalAlpha=1;
+    }
+
+    // The living dummy — standing dead-still on the far right
+    if(tw>6){
+      ctx.globalAlpha=Math.min(1,(tw-6)*0.6);
+      drawDummy(138,90,t);
+      ctx.globalAlpha=1;
+    }
+
+    if(tw>0){
+      const tscale=Math.min(1,tw*0.18);
+      ctx.save();
+      ctx.translate(W/2,18);ctx.scale(tscale,tscale);ctx.translate(-W/2,-18);
+      ctx.shadowColor=C.yellow;ctx.shadowBlur=28;
+      ctx.fillStyle=C.yellow;
+      ctx.font=`bold 24px "Courier New",monospace`;
+      ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText('BOOKSOLE',W/2,8);
+      ctx.shadowColor=C.gold;ctx.shadowBlur=8;
+      ctx.fillStyle=C.gold;
+      ctx.fillText('BOOKSOLE',W/2+2,10);
+      ctx.shadowBlur=0;ctx.restore();
+    }
+
+    // Narration sits in the clear band between the title and the
+    // characters' heads, never overlapping the cast below
+    if(tw>3){
+      ctx.globalAlpha=Math.min(1,(tw-3)*0.4);
+      txt('A gnome twitches. A mask blinks. A dummy turns its head.',W/2,68,C.cream,8,'center');
+      ctx.globalAlpha=1;
+    }
+    if(tw>5){
+      ctx.globalAlpha=Math.min(1,(tw-5)*0.4);
+      txt('Every story R.L. Spine never finished is alive in here.',W/2,82,C.ltgrey,8,'center');
+      ctx.globalAlpha=1;
+    }
+    if(tw>7){
+      const bl=t%90<45;
+      ctx.globalAlpha=bl?1:0.3;
+      ctx.shadowColor=bl?C.yellow:'transparent';ctx.shadowBlur=bl?10:0;
+      txt('[ CLICK TO ENTER THE BOOKSOLE ]',W/2,H-24,bl?C.yellow:C.grey,9,'center');
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  SCENE RUNNER
+  // ═══════════════════════════════════════════════════════
+  const SCENES=[
+    {fn:sc0,dur:160,clicks:1},
+    {fn:sc1,dur:400,clicks:3},
+    {fn:sc2,dur:360,clicks:3},
+    {fn:sc3,dur:320,clicks:3},
+    {fn:sc4,dur:400,clicks:4},
+    {fn:sc5,dur:340,clicks:4},
+    {fn:sc6,dur:460,clicks:2},
+  ];
+  let si=0,st=0,cc=0,done=false;
+  function nextScene(){si++;if(si>=SCENES.length){done=true;endIntro();}else{st=0;cc=0;}}
+  function endIntro(){
+    document.getElementById('intro').style.display='none';
+    document.getElementById('boot').style.display='flex';
+    bootStart();
+  }
+  IC.addEventListener('click',()=>{
+    if(done)return;
+    const sc=SCENES[si];cc++;
+    if(cc>=sc.clicks||st>=sc.dur-10)nextScene();
+    else st=Math.min(st+(sc.dur/sc.clicks|0),sc.dur-1);
+  });
+  document.getElementById('intro-skip').onclick=()=>{done=true;endIntro();};
+  let raf;
+  function loop(){
+    if(done){cancelAnimationFrame(raf);return;}
+    st++;
+    const sc=SCENES[si];
+    const tw=Math.min(10,st/(sc.dur/12));
+    sc.fn(st,tw);
+    if(st>=sc.dur)nextScene();
+    raf=requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+function bootStart(){
+  const MSGS=['BOOKSOLE SYSTEM v0.5','LOADING LIBRARY INDEX...','MOUNTING CARTRIDGE SLOT...','ACHIEVEMENT ENGINE READY...','SAVE SYSTEM ONLINE...','PRESS START'];
+  let pct=0,mi=0;
+  function tick(){
+    if(pct>=100){
+      const m=document.getElementById('bmsg');
+      m.textContent='PRESS ANYWHERE TO CONTINUE';m.classList.add('boot-blink');return;
+    }
+    pct+=Math.random()*8+2;if(pct>100)pct=100;
+    document.getElementById('bbar').style.width=pct+'%';
+    const ni=Math.min(Math.floor(pct/22),MSGS.length-2);
+    if(ni>mi){mi=ni;document.getElementById('bmsg').textContent=MSGS[mi];}
+    setTimeout(tick,60+Math.random()*90);
+  }
+  tick();
+  document.getElementById('boot').addEventListener('click',()=>{
+    if(pct>=100){show('library');renderLibrary();}
+  },{once:false});
+}
+
+// ══════════════════════════════════════════════════════
+//  DEMO BOOK — "The BOOKSOLE" origin story
+// ══════════════════════════════════════════════════════
+const DEMO={
+  title:"The BOOKSOLE (Demo)",
+  startPage:"1",
+  pages:{
+    "1":{text:"The screen of your uncle's computer fills with a sickly green glow.\n\nYou — MAX — are no longer in the living room.\n\nYou're standing at the edge of a dark, endless library. The shelves stretch upward into fog.\n\nA rasping voice echoes from everywhere at once:\n\n\"Welcome, boy. To reach the exit... you must face my creations.\"\n\nA door appears to your left. Another flickers ahead.\nBehind you: absolute darkness.",
+      choices:[{text:"Go through the door on the left",target:"2"},{text:"Head toward the flickering door ahead",target:"3"},{text:"Try to go back into the darkness",target:"4"}]},
+    "2":{text:"The door swings open on its own.\n\nYou step into a room that smells of old paper and something worse.\n\nA shape shuffles toward you. A ghost — translucent, shimmering, dressed in tattered school uniform.\n\n\"Turn back,\" it moans. \"You cannot win.\"\n\nBut its eyes flicker with something other than menace.\n\nFear.",
+      choices:[{text:"Stand your ground and speak to it",target:"5"},{text:"Sprint past it toward the far door",target:"6"}]},
+    "3":{text:"The flickering door leads into a carnival.\n\nNeon lights pulse in colors that shouldn't exist.\nA clown — eight feet tall, grinning, holding a balloon that says YOUR NAME — watches you from across the midway.\n\nTo your right: a game booth. A real phone sits on the counter.\n\nMaybe you could call someone. Maybe Uncle Spine himself.",
+      choices:[{text:"Walk toward the clown",target:"7"},{text:"Go to the game booth — try the phone",target:"8"}]},
+    "4":{text:"You step into the darkness.\n\nFor a moment: nothing.\n\nThen a cold hand lands on your shoulder.\n\nA voice — Victor Grimshaw's voice — hisses:\n\"There is no \"back\" in here. Only forward. Only MY way.\"",
+      choices:[{text:"Wrench free and run left",target:"2"},{text:"Wrench free and run right",target:"3"}]},
+    "5":{text:"\"I'm not your enemy,\" you say.\n\nThe ghost blinks.\n\nSlowly, it shows you its palm. Written there in ink:\n\"Chapter 17. Page 134. The author never finished my story.\"\n\nYou understand. These creatures aren't evil. They're incomplete. Abandoned mid-sentence.\n\n\"Help me finish your story,\" you say, \"and I'll help you find the exit.\"\n\nThe ghost smiles for the first time in a hundred printed pages.",
+      choices:[{text:"Follow the ghost — it knows the way",target:"9"}]},
+    "6":{text:"You duck under its arm and run.\n\nThrough the door. Into a corridor of mirrors.\n\nEvery reflection shows a different version of you — each one trapped, each one afraid.\n\nOne reflection mouths words: \"SPINE. PAGE FORTY-FOUR.\"",
+      choices:[{text:"Remember that clue and keep running",target:"10"},{text:"Stop and study the mirrors",target:"11"}]},
+    "7":{text:"The clown doesn't move as you approach.\n\nUp close, the grin is painted on.\nBelow it: a real mouth, small and sad.\n\n\"I was supposed to be funny,\" it says. \"The author made me scary instead.\"\n\n\"I know who did this to you,\" you say. \"Victor Grimshaw. He trapped us all.\"\n\nThe balloon pops. The clown deflates — literally, like a balloon — and floats upward, giggling, finally free.",
+      choices:[{text:"Take the path the clown revealed",target:"9"}]},
+    "8":{text:"The phone on the counter is real.\n\nYou dial. It rings.\n\nA familiar voice: your uncle. R.L. Spine himself.\n\n\"MAX?! Is that you? I've been trying to reach you—\"\n\"Uncle, I'm INSIDE the BOOKSOLE. Victor Grimshaw—\"\n\"I KNOW. Listen carefully. The exit code is—\"\n\nStatic. The line cuts.\n\nBut you heard two numbers before it died: forty... and four.",
+      choices:[{text:"Search for page 44 in this world",target:"10"},{text:"Look around the booth for more clues",target:"11"}]},
+    "9":{text:"The ghost leads you through corridors of unfinished sentences.\n\nPassages trail off mid-word. Characters stand frozen, waiting for an author to return.\n\nThen: a door of pure white light.\n\n\"That's the exit,\" the ghost says. \"Go. I'll hold the others back.\"\n\nYou run toward it.\n\nThe light explodes.\n\nYou're back. The computer screen is dark.\nYour uncle bursts through the front door.\n\n\"MAX! Thank goodness — Victor's been arrested. Are you alright?\"",
+      choices:[],isEnding:true,endingType:"good",endingLabel:"The Unfinished Story"},
+    "10":{text:"Page forty-four.\n\nIn this world it's a literal page — glowing, floating at a crossroads.\n\nYou touch it.\n\nThe entire library shudders. Shelves crack. The floor splits.\n\nA voice — Victor's voice — screams.\n\nThe BOOKSOLE is destabilizing.\n\nYou have ten seconds to find the exit.\n\nYou run.",
+      choices:[{text:"Sprint toward the white light",target:"9"},{text:"Try to take the page with you",target:"12"}]},
+    "11":{text:"The mirrors teach you something terrible.\n\nEvery version of you that stopped here — stayed here.\n\nYou've been standing in this corridor for what feels like hours.\n\nThe reflections grow dimmer.\n\nYours does too.\n\nSomewhere, in the real world, the computer screen dims to black.\n\nMaxwell Thurston was never found.",
+      choices:[],isEnding:true,endingType:"bad",endingLabel:"The Mirror Maze"},
+    "12":{text:"You grab the page and run.\n\nBut it burns in your hand — it's rewriting itself.\n\nYour name appears at the top.\n\n\"Chapter One: Maxwell Thurston stepped into the BOOKSOLE and never left.\"\n\nYou drop it, screaming, and sprint for the light.\n\nYou make it out. Barely.\n\nBut your hand — your writing hand — never stops shaking.\n\nSomething from inside followed you home.",
+      choices:[],isEnding:true,endingType:"neutral",endingLabel:"Something Came Back"},
+  }
+};
+
+// ══════════════════════════════════════════════════════
+//  LIBRARY + GAME ENGINE
+// ══════════════════════════════════════════════════════
+function libLoad(){try{return JSON.parse(localStorage.getItem('bs5_lib')||'[]');}catch(e){return[];}}
+function libSave(lib){try{localStorage.setItem('bs5_lib',JSON.stringify(lib));}catch(e){}}
+function saveBookData(id,data){try{localStorage.setItem('bs5_bd_'+id,JSON.stringify(data));}catch(e){toast('STORAGE FULL — EXPORT SAVES');}}
+function loadBookData(id){try{const d=localStorage.getItem('bs5_bd_'+id);return d?JSON.parse(d):null;}catch(e){return null;}}
+function deleteBookData(id){try{localStorage.removeItem('bs5_bd_'+id);localStorage.removeItem('bs5_pg_'+id);}catch(e){}}
+
+let book=null,bookId=null,saves=[],active=0,found={},notes={},unlocked=new Set(),stats={c:0,p:0,r:0,e:0};
+let fontSize=13,library=[],detailBookId=null;
+
+function cur(){return saves[active];}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function persist(){
+  if(!bookId)return;
+  saveBookData(bookId,{saves,found,notes,unlocked:[...unlocked],stats,fontSize});
+  syncLibMeta();
+}
+function loadSession(){
+  if(!bookId)return;
+  const d=loadBookData(bookId);
+  if(d){saves=d.saves||[];found=d.found||{};notes=d.notes||{};unlocked=new Set(d.unlocked||[]);stats=d.stats||{c:0,p:0,r:0,e:0};fontSize=d.fontSize||13;}
+  else{saves=[];found={};notes={};unlocked=new Set();stats={c:0,p:0,r:0,e:0};fontSize=13;}
+}
+function syncLibMeta(){
+  const lib=libLoad();const idx=lib.findIndex(b=>b.id===bookId);if(idx<0)return;
+  lib[idx].totalRuns=stats.r;lib[idx].foundEndings=Object.keys(found).length;lib[idx].totalChoices=stats.c;
+  libSave(lib);library=lib;
+}
+
+function buildAchs(bk){
+  const ends=Object.values(bk.pages).filter(p=>p.isEnding);
+  const bad=ends.filter(p=>p.endingType==='bad');
+  return[
+    {id:'first',n:'FIRST ENDING',d:'Reach any ending',check:()=>Object.keys(found).length>=1},
+    {id:'three',n:'COLLECTOR',d:'Find 3 different endings',check:()=>Object.keys(found).length>=3},
+    {id:'all',n:'COMPLETIONIST',d:`Find all ${ends.length} endings`,check:()=>Object.keys(found).length>=ends.length},
+    {id:'good',n:'HAPPY PLACE',d:'Reach a good ending',check:()=>Object.values(found).some(t=>t==='good')},
+    {id:'allbad',n:'PAIN SEEKER',d:`Find all ${bad.length} bad ends`,check:()=>Object.entries(found).filter(([,t])=>t==='bad').length>=bad.length},
+    {id:'speed',n:'SPEEDRUNNER',d:'End in 3 choices or fewer',check:()=>saves.some(s=>s.isEnding&&s.choices<=3)},
+    {id:'5r',n:'OBSESSED',d:'Complete 5 playthroughs',check:()=>stats.r>=5},
+    {id:'exp',n:'EXPLORER',d:'Visit 10 different pages',check:()=>stats.p>=10},
+    {id:'note',n:'ARCHIVIST',d:'Write a journal note',check:()=>Object.keys(notes).length>=1},
+  ];
+}
+
+function show(id){
+  ['boot','library','parsing','app','journal'].forEach(s=>{
+    document.getElementById(s).style.display=s===id?'flex':'none';
+  });
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+
+// ── LIBRARY ──
+function renderLibrary(){
+  library=libLoad();
+  document.getElementById('lib-count').textContent=library.length+' cartridge'+(library.length!==1?'s':'');
+  const grid=document.getElementById('lib-grid');grid.innerHTML='';
+  library.forEach(meta=>{
+    const pct=meta.totalEndings>0?Math.round((meta.foundEndings||0)/meta.totalEndings*100):0;
+    const isNew=!(meta.foundEndings>0||meta.totalRuns>0);
+    let badge='';
+    if(meta.series==='Give Yourself Goosebumps')badge+='<div class="cc-badge gyg">GYG</div>';
+    else if(meta.series==='Classic Goosebumps')badge+='<div class="cc-badge cg">CG</div>';
+    if(isNew)badge+='<div class="cc-badge new">NEW</div>';
+    const card=document.createElement('div');card.className='cart-card';
+    card.innerHTML=`<div class="cc-cover">${meta.coverDataUrl?`<img src="${meta.coverDataUrl}" alt="">`:'<div class="cc-cover-fallback">📖</div>'}${badge}</div><div class="cc-info"><div class="cc-title">${esc(meta.title)}</div><div class="cc-author">${esc(meta.author||'')}</div><div class="cc-prog"><div class="cc-pbar"><div class="cc-pfill" style="width:${pct}%"></div></div><div class="cc-pct">${pct}%</div></div></div>`;
+    card.onclick=()=>openDetail(meta.id);
+    grid.appendChild(card);
+  });
+  const add=document.createElement('div');add.className='cart-card add-card';
+  add.innerHTML='<div class="add-ico">+</div><div class="add-lbl">ADD BOOK</div>';
+  add.onclick=()=>document.getElementById('fi').click();
+  grid.appendChild(add);
+}
+
+// ── DETAIL ──
+function openDetail(id){
+  const meta=library.find(b=>b.id===id);if(!meta)return;
+  detailBookId=id;
+  document.getElementById('det-title').textContent=meta.title||'Unknown';
+  document.getElementById('det-author').textContent=meta.author||'Unknown Author';
+  document.getElementById('det-pub').textContent=[meta.publisher,meta.year].filter(Boolean).join(' · ')||'';
+  const tags=document.getElementById('det-tags');tags.innerHTML='';
+  [meta.series,meta.totalPages?meta.totalPages+' PAGES':null,meta.totalEndings?meta.totalEndings+' ENDINGS':null].filter(Boolean).forEach(tag=>{const t=document.createElement('div');t.className='det-tag';t.textContent=tag;tags.appendChild(t);});
+  document.getElementById('det-cover').innerHTML=meta.coverDataUrl?`<img src="${meta.coverDataUrl}" alt="">`:'<div class="det-cover-fallback">📖</div>';
+  const pct=meta.totalEndings>0?Math.round((meta.foundEndings||0)/meta.totalEndings*100):0;
+  document.getElementById('det-stats').innerHTML=`<div class="det-stat"><div class="det-sl">runs</div><div class="det-sv">${meta.totalRuns||0}</div></div><div class="det-stat"><div class="det-sl">endings</div><div class="det-sv">${meta.foundEndings||0} / ${meta.totalEndings||'?'}</div></div><div class="det-stat"><div class="det-sl">completion</div><div class="det-sv">${pct}%</div></div><div class="det-stat"><div class="det-sl">choices</div><div class="det-sv">${meta.totalChoices||0}</div></div>`;
+  document.getElementById('det-desc').textContent=meta.description||'No description available.';
+  document.getElementById('detail').style.display='flex';
+}
+function closeDetail(){document.getElementById('detail').style.display='none';detailBookId=null;}
+
+// ── LAUNCH ──
+async function launchBook(id){
+  const meta=library.find(b=>b.id===id);if(!meta)return;
+  closeDetail();
+  const stored=localStorage.getItem('bs5_pg_'+id);
+  if(!stored){toast('BOOK DATA MISSING');return;}
+  book=JSON.parse(stored);bookId=id;loadSession();
+  document.getElementById('tbook').textContent=meta.title;
+  if(saves.length===0)newSave('RUN #1');else active=0;
+  show('app');renderAll();
+}
+
+// ── SAVE OPS ──
+function newSave(label){const sp=book.startPage||'1';saves.push({id:Date.now(),name:label||`RUN #${saves.length+1}`,page:sp,path:[sp],choices:0,isEnding:false});active=saves.length-1;stats.r++;persist();}
+function goBack(){const s=cur();if(s.path.length<=1)return;s.path.pop();s.page=s.path[s.path.length-1];s.choices=Math.max(0,s.choices-1);s.isEnding=false;persist();renderAll();document.getElementById('story').scrollTop=0;}
+function jumpPath(pg){const s=cur();const i=s.path.lastIndexOf(pg);if(i<0)return;s.path=s.path.slice(0,i+1);s.page=pg;s.choices=Math.max(0,s.path.length-1);s.isEnding=!!(book.pages[pg]&&book.pages[pg].isEnding);persist();renderAll();document.getElementById('story').scrollTop=0;}
+function makeChoice(tgt){
+  const s=cur();s.page=tgt;s.path.push(tgt);s.choices++;stats.c++;stats.p++;
+  const pg=book.pages[tgt];
+  if(pg&&pg.isEnding){s.isEnding=true;if(!found[tgt]){found[tgt]=pg.endingType||'neutral';stats.e++;}}
+  checkAchs();persist();renderAll();document.getElementById('story').scrollTop=0;
+}
+function checkAchs(){buildAchs(book).forEach(a=>{if(!unlocked.has(a.id)&&a.check()){unlocked.add(a.id);toast('★ UNLOCKED: '+a.n);}});}
+
+// ── RENDER ──
+function renderAll(){renderSaves();renderStory();renderAchs();renderStats();renderDots();}
+function renderSaves(){
+  const el=document.getElementById('saves');el.innerHTML='';
+  saves.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='sv'+(i===active?' cur':'');
+    d.innerHTML=`<button class="sv-del" data-i="${i}">X</button><div class="sv-name">${esc(s.name)}</div><div class="sv-sub">p.${s.page} · ${s.choices} choices${s.isEnding?' · END':''}</div>`;
+    d.addEventListener('click',e=>{if(e.target.dataset.i!==undefined)return;active=i;renderAll();});
+    d.querySelector('.sv-del').addEventListener('click',e=>{e.stopPropagation();if(saves.length<=1){toast('NEED AT LEAST ONE SAVE');return;}saves.splice(+e.target.dataset.i,1);if(active>=saves.length)active=saves.length-1;persist();renderAll();});
+    el.appendChild(d);
+  });
+}
+function renderStory(){
+  const s=cur(),pg=book.pages[s.page],el=document.getElementById('story');
+  document.getElementById('mbc').textContent=`page ${s.page}  ·  choices: ${s.choices}  ·  path: ${s.path.length}`;
+  document.getElementById('backbtn').disabled=s.path.length<=1;
+  if(!pg){el.innerHTML=`<div class="stxt" style="font-size:${fontSize}px">Page ${esc(s.page)} not found in this book.</div>`;return;}
+  if(pg.isEnding){
+    const sym=pg.endingType==='good'?'★':pg.endingType==='bad'?'✕':'●';
+    el.innerHTML=`<div class="ending-wrap"><div class="ending-sym ${pg.endingType||'neutral'}">${sym}</div><div class="etype ${pg.endingType||'neutral'}">${(pg.endingType||'neutral').toUpperCase()} ENDING</div><div class="elbl">${esc(pg.endingLabel||'')}</div><div class="etxt" style="font-size:${fontSize}px">${esc(pg.text)}</div><div class="end-btns"><button class="rbtn" id="rbtn">▶ NEW RUN</button><button class="rbtn" id="libbtn2">⌂ LIBRARY</button></div></div>`;
+    document.getElementById('rbtn').onclick=()=>{newSave();renderAll();};
+    document.getElementById('libbtn2').onclick=goToLibrary;
+    return;
+  }
+  const pv=s.path.slice(-8).map((p,i,a)=>`<span class="pn${i===a.length-1?' cur':''}" data-pg="${p}">${p}</span>${i<a.length-1?'<span class="parr">›</span>':''}`).join('');
+  el.innerHTML=`<div class="pg-id">// PAGE ${s.page}</div><div class="path-row" id="pathrow">${pv}</div><div class="stxt" style="font-size:${fontSize}px">${esc(pg.text)}</div>${pg.choices.length?'<div class="ch">// WHAT DO YOU DO?</div>':''}<div class="choices" id="choices"></div><div class="key-hint">PRESS 1-${pg.choices.length} TO CHOOSE  ·  BACKSPACE = UNDO</div>`;
+  el.querySelectorAll('.pn:not(.cur)').forEach(n=>n.addEventListener('click',()=>jumpPath(n.dataset.pg)));
+  pg.choices.forEach((c,i)=>{const b=document.createElement('button');b.className='cbtn';b.innerHTML=`<span class="cn">${i+1}</span><span style="font-size:${fontSize}px">${esc(c.text)}</span>`;b.onclick=()=>makeChoice(c.target);document.getElementById('choices').appendChild(b);});
+}
+function renderAchs(){
+  const el=document.getElementById('achs');el.innerHTML='';
+  buildAchs(book).forEach(a=>{const on=unlocked.has(a.id);const d=document.createElement('div');d.className='ach '+(on?'on':'off');d.innerHTML=`<div class="ach-n">${on?'[✓] ':'[ ] '}${esc(a.n)}</div><div class="ach-d">${esc(a.d)}</div>`;el.appendChild(d);});
+}
+function renderStats(){['sc','sp','sr','se'].forEach((id,i)=>document.getElementById(id).textContent=[stats.c,stats.p,stats.r,Object.keys(found).length][i]);}
+function renderDots(){
+  const eps=Object.entries(book.pages).filter(([,p])=>p.isEnding);
+  const el=document.getElementById('edots');el.innerHTML='';
+  eps.forEach(([id,p])=>{const f=found[id];const d=document.createElement('div');d.className='edot'+(f?' '+f:'');d.title=f?(p.endingLabel||'p.'+id):'???';el.appendChild(d);});
+  document.getElementById('empc').textContent=Object.keys(found).length+' / '+eps.length+' found';
+}
+function renderJournal(){
+  const eps=Object.entries(book.pages).filter(([,p])=>p.isEnding);
+  const fnd=eps.filter(([id])=>found[id]),nf=eps.filter(([id])=>!found[id]);
+  document.getElementById('jbn').textContent=book.title;
+  const body=document.getElementById('jbody');body.innerHTML='';
+  const s1=document.createElement('div');s1.className='js';
+  s1.innerHTML=`<div class="jsh">DISCOVERED (${fnd.length}/${eps.length})</div>`;
+  fnd.forEach(([id,p])=>{
+    const tc=(found[id]||'neutral')[0];
+    const c=document.createElement('div');c.className=`ecard ${tc}`;
+    c.innerHTML=`<div class="ec-row"><div class="ecdot ${tc}"></div><div class="ec-n">${esc(p.endingLabel||'PAGE '+id)}</div><div class="ec-p">p.${id}</div></div><textarea class="ec-inp" data-id="${id}" placeholder="write notes here...">${esc(notes[id]||'')}</textarea>`;
+    c.querySelector('textarea').addEventListener('input',e=>{notes[e.target.dataset.id]=e.target.value;checkAchs();persist();});
+    s1.appendChild(c);
+  });
+  body.appendChild(s1);
+  if(nf.length){const s2=document.createElement('div');s2.className='js';s2.innerHTML=`<div class="jsh">UNDISCOVERED (${nf.length})</div>${nf.map(()=>'<div class="unk">??? · not yet found</div>').join('')}`;body.appendChild(s2);}
+  const al=buildAchs(book);const s3=document.createElement('div');s3.className='js';
+  s3.innerHTML=`<div class="jsh">ACHIEVEMENTS (${unlocked.size}/${al.length})</div>${al.map(a=>`<div class="ach ${unlocked.has(a.id)?'on':'off'}" style="margin-bottom:4px"><div class="ach-n">${unlocked.has(a.id)?'[✓] ':'[ ] '}${esc(a.n)}</div><div class="ach-d">${esc(a.d)}</div></div>`).join('')}`;
+  body.appendChild(s3);
+}
+
+// ── NAV ──
+function goToLibrary(){if(book)persist();book=null;bookId=null;show('library');renderLibrary();}
+function exportData(){if(!book)return;const d={book_title:book.title,exported:new Date().toISOString(),saves,found,notes,unlocked:[...unlocked],stats};const bl=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='booksole-save.json';a.click();}
+function importData(){const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());saves=d.saves||[];found=d.found||{};notes=d.notes||{};unlocked=new Set(d.unlocked||[]);stats=d.stats||{c:0,p:0,r:0,e:0};active=0;persist();renderAll();toast('SAVE IMPORTED');}catch(err){toast('IMPORT FAILED');}};inp.click();}
+function openSearch(){if(!book)return;document.getElementById('searchbar').style.display='block';document.getElementById('sb-input').value='';document.getElementById('sb-results').innerHTML='';document.getElementById('sb-input').focus();}
+function closeSearch(){document.getElementById('searchbar').style.display='none';}
+function doSearch(q){
+  const res=document.getElementById('sb-results');res.innerHTML='';if(!q.trim())return;
+  const ql=q.toLowerCase();const hits=Object.entries(book.pages).filter(([,p])=>p.text.toLowerCase().includes(ql)).slice(0,30);
+  if(!hits.length){res.innerHTML='<div class="sb-item" style="cursor:default;color:#444">no results</div>';return;}
+  hits.forEach(([id,p])=>{
+    const idx=p.text.toLowerCase().indexOf(ql);
+    const snip=p.text.slice(Math.max(0,idx-30),idx+q.length+40).replace(/\n/g,' ');
+    const hi=snip.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>`<mark>${esc(m)}</mark>`);
+    const d=document.createElement('div');d.className='sb-item';
+    d.innerHTML=`<span class="sb-pg">p.${id}</span><span>${hi}</span>`;
+    d.onclick=()=>{closeSearch();const s=cur();s.page=id;s.path.push(id);s.choices++;stats.c++;stats.p++;persist();renderAll();document.getElementById('story').scrollTop=0;};
+    res.appendChild(d);
+  });
+}
+
+// ── LOG ──
+function log(msg,type){const el=document.getElementById('plog');const p=document.createElement('p');p.textContent='> '+msg;if(type)p.className=type;el.appendChild(p);el.scrollTop=el.scrollHeight;}
+
+// ── EPUB PARSER ──
+async function parseEpub(file){
+  const zip=await JSZip.loadAsync(await file.arrayBuffer());
+  const opfKey=Object.keys(zip.files).find(k=>k.endsWith('.opf'));
+  if(!opfKey)throw new Error('No OPF found');
+  const opfDoc=new DOMParser().parseFromString(await zip.files[opfKey].async('text'),'application/xml');
+  const base=opfKey.includes('/')?opfKey.slice(0,opfKey.lastIndexOf('/')+1):'';
+  const mf={};opfDoc.querySelectorAll('manifest item').forEach(it=>mf[it.getAttribute('id')]={href:base+it.getAttribute('href'),type:it.getAttribute('media-type')||''});
+  const spine=[];opfDoc.querySelectorAll('spine itemref').forEach(r=>spine.push(r.getAttribute('idref')));
+  const getM=tag=>{const el=opfDoc.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/',tag)[0]||opfDoc.querySelector(tag);return el?el.textContent.trim():'';};
+  const title=getM('title'),author=getM('creator'),publisher=getM('publisher'),year=getM('date').slice(0,4);
+  let desc=getM('description');if(desc)desc=new DOMParser().parseFromString(desc,'text/html').body.textContent.trim();
+  let series='';
+  if(title.toLowerCase().includes('give yourself goosebumps')||file.name.toLowerCase().includes('give_yourself'))series='Give Yourself Goosebumps';
+  else if(title.toLowerCase().includes('goosebumps'))series='Classic Goosebumps';
+  // Cover
+  let coverDataUrl='';
+  const covMeta=opfDoc.querySelector('meta[name="cover"]');
+  const covId=covMeta?covMeta.getAttribute('content'):'';
+  const covItem=(covId&&mf[covId])||Object.values(mf).find(v=>v.href.toLowerCase().includes('cover')&&v.type.startsWith('image/'));
+  if(covItem){try{const e=zip.files[covItem.href]||zip.files[covItem.href.replace(/^\//,'')];if(e){const ab=await e.async('arraybuffer');const b64=btoa(String.fromCharCode(...new Uint8Array(ab)));coverDataUrl=`data:${covItem.type};base64,${b64}`;log('cover loaded','ok');}}catch(e){log('cover failed','warn');}}
+  log('spine: '+spine.length,'ok');
+  const htp={};for(const id of spine){const item=mf[id];if(!item)continue;const bn=item.href.split('/').pop();const pm=bn.match(/ch(\d+)\.(?:html?|xhtml?)$/i);if(pm)htp[bn]=String(parseInt(pm[1],10));}
+  const pages={};let parsed=0;
+  for(const id of spine){
+    const item=mf[id];if(!item)continue;
+    const bn=item.href.split('/').pop();const pageId=htp[bn];if(!pageId)continue;
+    const entry=zip.files[item.href]||zip.files[item.href.replace(/^\//,'')];if(!entry)continue;
+    const chDoc=new DOMParser().parseFromString(await entry.async('text'),'text/html');
+    const choices=[];const seen=new Set();
+    chDoc.querySelectorAll('a[href]').forEach(a=>{const tm=a.textContent.match(/PAGE\s+(\d+)/i);if(!tm)return;const target=tm[1];if(seen.has(target))return;seen.add(target);const para=a.closest('p');const label=para?para.textContent.replace(/[,.]?\s*(?:go on to|turn to|go to)\s+PAGE\s+\d+\.?/gi,'').replace(/\s+/g,' ').trim().slice(0,120):'Go to page '+target;choices.push({text:label||'Go to page '+target,target});});
+    chDoc.querySelectorAll('a[href]').forEach(a=>{const p=a.closest('p');if(p)p.remove();});
+    chDoc.querySelectorAll('.chapterHead,.centerImage,.centerImage0,.centerImage00,.centerImage3,img').forEach(el=>el.remove());
+    const raw=chDoc.body.textContent.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>!l.match(/^Classic Goosebumps|^Give Yourself Goosebumps/i)).join('\n').replace(/\n{3,}/g,'\n\n').trim();
+    const isEnding=choices.length===0;
+    const et=isEnding?(()=>{const l=raw.toLowerCase();return['congratulations','saved','hero','victory','escaped','survived'].some(w=>l.includes(w))?'good':['game over','you are dead','trapped','doom','forever'].some(w=>l.includes(w))?'bad':'neutral';})():null;
+    pages[pageId]={text:raw,choices,isEnding,endingType:et};parsed++;
+  }
+  const endingCount=Object.values(pages).filter(p=>p.isEnding).length;
+  log(parsed+' pages · '+endingCount+' endings','ok');
+  const startPage=String(Object.keys(pages).map(Number).sort((a,b)=>a-b)[0]);
+  return{bookData:{title,pages,startPage},meta:{id:'',title,author,publisher,year,description:desc,series,totalPages:parsed,totalEndings:endingCount,coverDataUrl,totalRuns:0,foundEndings:0,totalChoices:0}};
+}
+
+function parseTxt(text,title){
+  const clean=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const ms=[...clean.matchAll(/(?:^|\n)[ \t]*(\d{1,3})[ \t]*\n/gm)];
+  if(ms.length<3)return null;
+  const pages={};
+  for(let i=0;i<ms.length;i++){
+    const m=ms[i],id=m[1],start=m.index+m[0].length,end=i+1<ms.length?ms[i+1].index:clean.length;
+    const raw=clean.slice(start,end).trim();
+    const cms=[...raw.matchAll(/(?:turn to|go to|see|flip to)\s+page\s+(\d+)/gi)];
+    const choices=[];const seen=new Set();
+    for(const c of cms){const t=c[1];if(seen.has(t))continue;seen.add(t);const b=raw.slice(Math.max(0,raw.indexOf(c[0])-120),raw.indexOf(c[0]));const pts=b.split(/[.!?\n]/);choices.push({text:(pts[pts.length-1]||'').trim().slice(0,100)||'Go to page '+t,target:t});}
+    const disp=raw.replace(/(?:turn to|go to|see|flip to)\s+page\s+\d+[.,]?/gi,'').replace(/\n{3,}/g,'\n\n').trim();
+    const isEnding=choices.length===0;
+    const et=isEnding?(()=>{const l=raw.toLowerCase();return['congratulations','saved','hero'].some(w=>l.includes(w))?'good':['game over','trapped','doom'].some(w=>l.includes(w))?'bad':'neutral';})():null;
+    pages[id]={text:disp,choices,isEnding,endingType:et};
+  }
+  const ec=Object.values(pages).filter(p=>p.isEnding).length;
+  return{title,pages,startPage:Object.keys(pages).sort((a,b)=>+a-+b)[0]};
+}
+
+// ── HANDLE FILE ──
+async function handleFile(file){
+  show('parsing');document.getElementById('plog').innerHTML='';
+  log('loading: '+file.name);log('size: '+(file.size/1024).toFixed(1)+' KB');
+  const name=file.name.replace(/\.[^.]+$/,'').replace(/_/g,' ');
+  try{
+    let bookData,meta;
+    if(file.name.match(/\.epub$/i)){
+      log('epub — unpacking...');const res=await parseEpub(file);bookData=res.bookData;meta=res.meta;
+    }else{
+      let text=await file.text();
+      if(file.name.match(/\.html?$/i))text=new DOMParser().parseFromString(text,'text/html').body.textContent;
+      log('read '+text.length.toLocaleString()+' chars');
+      bookData=parseTxt(text,name);
+      if(!bookData){log('no pages found — try a .epub or CYOA .txt','warn');setTimeout(()=>{show('library');renderLibrary();},2000);return;}
+      meta={id:'',title:name,author:'',publisher:'',year:'',description:'',series:'',totalPages:Object.keys(bookData.pages).length,totalEndings:Object.values(bookData.pages).filter(p=>p.isEnding).length,coverDataUrl:'',totalRuns:0,foundEndings:0,totalChoices:0};
+    }
+    const lib=libLoad();
+    const dup=lib.find(b=>b.title===meta.title);
+    if(dup){const id=dup.id;dup.coverDataUrl=meta.coverDataUrl||dup.coverDataUrl;libSave(lib);localStorage.setItem('bs5_pg_'+id,JSON.stringify(bookData));log('updated existing entry','ok');setTimeout(()=>{show('library');renderLibrary();},400);return;}
+    const id='b'+Date.now();meta.id=id;lib.push(meta);libSave(lib);
+    localStorage.setItem('bs5_pg_'+id,JSON.stringify(bookData));
+    log('done!','ok');setTimeout(()=>{show('library');renderLibrary();},400);
+  }catch(err){log('error: '+err.message,'warn');setTimeout(()=>{show('library');renderLibrary();},2000);}
+}
+
+// ── LOAD DEMO ──
+function loadDemo(){
+  const lib=libLoad();
+  if(lib.find(b=>b.id==='demo'))return;
+  const meta={id:'demo',title:DEMO.title,author:'Booksole Studios',publisher:'The Digital Prison',year:'2026',description:'MAX, nephew of horror author R.L. SPINE, is trapped inside the BOOKSOLE — a device built by the jealous neighbor VICTOR GRIMSHAW. Navigate the digital library, face the unfinished monsters, and find the exit. Or stay trapped forever.',series:'',totalPages:Object.keys(DEMO.pages).length,totalEndings:Object.values(DEMO.pages).filter(p=>p.isEnding).length,coverDataUrl:'',totalRuns:0,foundEndings:0,totalChoices:0};
+  lib.unshift(meta);libSave(lib);
+  localStorage.setItem('bs5_pg_demo',JSON.stringify(DEMO));
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('app').style.display!=='none'&&book){
+    if(document.getElementById('searchbar').style.display!=='none')return;
+    const n=parseInt(e.key);if(n>=1&&n<=9){const pg=book.pages[cur().page];if(pg&&pg.choices[n-1])makeChoice(pg.choices[n-1].target);}
+    if(e.key==='Backspace'&&!e.target.matches('input,textarea')){e.preventDefault();goBack();}
+    if((e.ctrlKey||e.metaKey)&&e.key==='f'){e.preventDefault();openSearch();}
+  }
+  if(e.key==='Escape'){closeSearch();closeDetail();}
+});
+document.getElementById('sb-input').addEventListener('input',e=>doSearch(e.target.value));
+document.getElementById('sb-input').addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();});
+document.getElementById('screen').addEventListener('click',e=>{
+  const sb=document.getElementById('searchbar');
+  if(sb.style.display!=='none'&&!sb.contains(e.target))closeSearch();
+  if(e.target===document.getElementById('detail'))closeDetail();
+});
+
+// ── WIRE UP ──
+document.getElementById('fi').onchange=e=>{if(e.target.files[0])handleFile(e.target.files[0]);e.target.value='';};
+document.getElementById('lib-add-btn').onclick=()=>document.getElementById('fi').click();
+document.getElementById('det-play').onclick=()=>{if(detailBookId)launchBook(detailBookId);};
+document.getElementById('det-close').onclick=closeDetail;
+document.getElementById('det-del').onclick=()=>{
+  if(!detailBookId)return;if(!confirm('Remove this book and all save data?'))return;
+  libSave(libLoad().filter(b=>b.id!==detailBookId));
+  deleteBookData(detailBookId);closeDetail();renderLibrary();toast('CARTRIDGE REMOVED');
+};
+document.getElementById('libbackbtn').onclick=goToLibrary;
+document.getElementById('newrun').onclick=()=>{newSave();renderAll();};
+document.getElementById('jbtn').onclick=()=>{renderJournal();show('journal');};
+document.getElementById('jback').onclick=()=>show('app');
+document.getElementById('exbtn').onclick=exportData;
+document.getElementById('imbtn').onclick=importData;
+document.getElementById('srchbtn').onclick=openSearch;
+document.getElementById('backbtn').onclick=goBack;
+document.getElementById('fup').onclick=()=>{fontSize=Math.min(20,fontSize+1);persist();renderStory();};
+document.getElementById('fdn').onclick=()=>{fontSize=Math.max(10,fontSize-1);persist();renderStory();};
+
+// ── INIT: load demo cartridge silently ──
+loadDemo();
+</script>
+</body>
+</html>
