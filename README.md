@@ -6,6 +6,8 @@ Includes a bundled demo book, **"The BOOKSOLE,"** an original horror-comedy stor
 
 To playthis users can simply download the html file and play it on their devices ,laptops and large screen devices are preffered
 
+**Note** You need to use an epub that is in the choose your own adventure format (R.L Stines Give yourself goosebumps series are recomended)
+
 ---
 
 ## What this actually is
